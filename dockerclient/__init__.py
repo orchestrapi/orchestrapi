@@ -1,7 +1,7 @@
 
 import subprocess
 from dataclasses import dataclass
-
+import json
 
 @dataclass
 class Container:
@@ -49,35 +49,44 @@ class DockerClient:
     @staticmethod
     def _start(container_model):
         template = ['docker', 'start', container_model.name]
-        print(template)
-        result = DockerClient.call(template).replace('\n', '')
-        print(result)
+        return DockerClient.call(template).replace('\n', '')
 
     @staticmethod
     def _stop(container_model):
         template = ['docker', 'stop', container_model.name]
-        result = DockerClient.call(template).replace('\n', '')
+        return DockerClient.call(template).replace('\n', '')
+
+    @staticmethod
+    def remove(container_model):
+        template = ['docker', 'rm', '-f', container_model.container_id]
+        DockerClient.call(template)
 
     @staticmethod
     def _clean_image(container_model):
         template = ['docker', 'rm', '-f', container_model.name]
 
     @staticmethod
-    def docker_start(container_model):
+    def docker_start(container_model, instance_name=None):
         if container_model.container_id:
             DockerClient._start(container_model)
         else:
-            DockerClient._run(container_model)
+            DockerClient._run(container_model, instance_name=instance_name)
 
     @staticmethod
-    def _run(container_model):
+    def inspect(container_model):
+        template = ['docker', 'inspect', container_model.name]
+        response = DockerClient.call(template)
+        return json.loads(response)[0]
+
+    @staticmethod
+    def _run(container_model, instance_name=None):
         template = ["docker", "run"]
         if container_model.params != {}:
             for param in container_model.params.keys():
                 template.append(f'-{param}')
                 template.append(container_model.params[param])
         template.append('--name')
-        template.append(container_model.name)
+        template.append(instance_name or container_model.name)
         template.append('-d')
         template.append(f'{container_model.image}:{container_model.version}')
         DockerClient.call(template).replace('\n', '')

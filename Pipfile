@@ -13,3 +13,4 @@ django = "*"
 [dev-packages]
 "autopep8" = "*"
 pylint = "*"
+ipdb = "*"
