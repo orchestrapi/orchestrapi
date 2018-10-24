@@ -9,6 +9,7 @@ python_version = "3.7"
 [packages]
 django = "*"
 "psycopg2-binary" = "*"
+slackclient = "*"
 
 [dev-packages]
 "autopep8" = "*"
