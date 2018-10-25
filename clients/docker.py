@@ -1,33 +1,19 @@
 
-import subprocess
-from dataclasses import dataclass
 import json
+from .helpers import Container
+from . import ShellClient
 
-@dataclass
-class Container:
-    def __init__(self, id, image, status, name):
-        self.id = id
-        self.image = image
-        self.status = status
-        self.name = name
-
-    def __str__(self):
-        return f"Container(id={self.id},name={self.name},status={self.status})"
-
-    def __repr__(self):
-        return self.__str__()
-
-class DockerClient:
-
-    @staticmethod
-    def call(command):
-        return subprocess.check_output(command).decode()
+class DockerClient(ShellClient):
 
     @staticmethod
     def docker_ps():
-        docker_ps_template = ["docker", "ps", "--format", '"{{.ID}}\t{{.Image}}\t{{.Status}}\t{{.Names}}"']
+        docker_ps_template = [
+            "docker", "ps",
+            "--format", '"{{.ID}}\t{{.Image}}\t{{.Status}}\t{{.Names}}"']
         result = DockerClient.call(docker_ps_template)
-        result = [r.replace('"', '').split('\t') for r in result.split('\n') if r != '']
+        result = [
+            r.replace('"', '').split(
+                '\t') for r in result.split('\n') if r != '']
         return [Container(*r) for r in result]
 
     @staticmethod
@@ -44,7 +30,7 @@ class DockerClient:
         for container in running_containers:
             if container.name == container_name:
                 return container.id
-        return None        
+        return None
 
     @staticmethod
     def _start(container_model):

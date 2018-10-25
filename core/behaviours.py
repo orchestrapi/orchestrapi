@@ -21,3 +21,20 @@ class UUIDIndexBehaviour(models.Model):
 
     class Meta:
         abstract = True
+
+class SlugableBehaviour(models.Model):
+    """Adds a slug fields to models."""
+
+    slugable_field = 'name'
+    slug = models.SlugField(max_length=255, unique=True, db_index=True)
+
+    def __str__(self):
+        return self.slug
+
+    def save(self, **kwargs):
+        if not self.slug:
+            self.slug = slugify(getattr(self, self.slugable_field))
+        super(SlugableBehaviour, self).save(**kwargs)
+
+    class Meta:
+        abstract = True

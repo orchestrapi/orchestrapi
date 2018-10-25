@@ -23,7 +23,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
-    'containers.apps.ContainersConfig'
+    'projects.apps.ProjectsConfig',
+    'containers.apps.ContainersConfig',
 
 ]
 

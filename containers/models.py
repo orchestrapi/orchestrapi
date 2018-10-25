@@ -1,7 +1,7 @@
 from django.db import models
 
 from django.contrib.postgres.fields import JSONField
-from dockerclient import DockerClient as dclient
+from clients.docker import DockerClient
 
 from core.behaviours import UUIDIndexBehaviour, TimestampableBehaviour
 
