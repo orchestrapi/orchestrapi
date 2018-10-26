@@ -10,6 +10,7 @@ python_version = "3.7"
 django = "*"
 "psycopg2-binary" = "*"
 slackclient = "*"
+celery = "*"
 
 [dev-packages]
 "autopep8" = "*"

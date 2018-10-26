@@ -5,6 +5,8 @@ from clients.docker import DockerClient as dclient
 
 from core.behaviours import UUIDIndexBehaviour, TimestampableBehaviour
 
+from projects.models import Project
+
 
 class Container(TimestampableBehaviour,UUIDIndexBehaviour, models.Model):
 
@@ -13,6 +15,13 @@ class Container(TimestampableBehaviour,UUIDIndexBehaviour, models.Model):
     image = models.CharField(max_length=30)
     version = models.CharField(max_length=20, default="latest")
     params = JSONField(default=dict, blank=True)
+    instance_number = models.SmallIntegerField()
+
+    project = models.ForeignKey(
+        Project, blank=True, null=True,
+        related_name='containers', on_delete=models.CASCADE)
+
+    active = models.BooleanField(default=True)
 
     @property
     def status(self):
@@ -29,43 +38,6 @@ class Container(TimestampableBehaviour,UUIDIndexBehaviour, models.Model):
                 self.container_id = id
                 self.save()
 
-    def raise_instance(self, instance_number):
-        params =self.params
-        params['e'] = f'INSTANCE={instance_number}'
-        name = self.name.split("_")[0] + f"_{instance_number}"
-        try:
-            instance = Container.objects.get(name=name)
-        except Exception:
-            instance = Container.objects.create(
-                name = name, image = self.image,
-                version = self.version, params=params
-            )
-        instance.start()
-
-    def running_instances(self):
-        """Esto deberia ir a un manager"""
-        instances = Container.objects.filter(image=self.image).order_by('name')
-        stopped = []
-        for instance in instances:
-            if not instance.status or instance.status == 'stopped':
-                stopped.append(instance.id)
-        return instances.exclude(id__in=stopped)
-
-    def scale(self, instance_number):
-        instances = self.running_instances().order_by('-name')
-        if instance_number > instances.count():
-            start_instance_number = instances.count() if instances.count() > 0 else 1
-            for i in range(start_instance_number, instance_number + 1):
-                print(f"Va a levantarse la instancia {i}")
-                self.raise_instance(i)
-        elif instance_number == instances.count():
-            print(f"Ya estan levantadas las {instance_number} instancias!")
-        else:
-            to_stop_instances = instances.count() - instance_number
-            instances_to_stop = instances[:to_stop_instances]
-            for instance in instances_to_stop:
-                print(f"Se va a parar {instance.name}")
-                instance.stop()
 
     @property
     def inspect(self):
@@ -76,6 +48,10 @@ class Container(TimestampableBehaviour,UUIDIndexBehaviour, models.Model):
         if self.status and self.status != 'stopped':
             return self.inspect['NetworkSettings']['IPAddress']
         return None
+
+    @property
+    def port(self):
+        return '8080'
 
     def remove(self):
         dclient.remove(self)

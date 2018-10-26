@@ -69,8 +69,13 @@ class DockerClient(ShellClient):
         template = ["docker", "run"]
         if container_model.params != {}:
             for param in container_model.params.keys():
-                template.append(f'-{param}')
-                template.append(container_model.params[param])
+                if param == 'e':
+                    for par_e, par_e_val in container_model.params['e'].items():
+                        template.append(f'-{param}')
+                        template.append(f'{par_e}={par_e_val}')
+                else:
+                    template.append(f'-{param}')
+                    template.append(container_model.params[param])
         template.append('--name')
         template.append(instance_name or container_model.name)
         template.append('-d')
