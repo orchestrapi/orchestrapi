@@ -12,7 +12,7 @@ class Project(SlugableBehaviour, TimestampableBehaviour, UUIDIndexBehaviour, mod
     git_url = models.URLField(blank=True, null=True)
     git_name = models.CharField(max_length=50, blank=True, null=True)
     domain = models.CharField(max_length=255, blank=True, null=True)
-    data = JSONField(default=dict(), blank=True)
+    data = JSONField(default=dict, blank=True)
     cloned = models.BooleanField(default=False)
 
     @property
