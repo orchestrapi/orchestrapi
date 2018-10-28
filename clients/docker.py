@@ -1,7 +1,11 @@
 
 import json
-from .helpers import Container
+
+from django.conf import settings
+
 from . import ShellClient
+from .helpers import Container
+
 
 class DockerClient(ShellClient):
 
@@ -36,6 +40,14 @@ class DockerClient(ShellClient):
     def _start(container_model):
         template = ['docker', 'start', container_model.name]
         return DockerClient.call(template).replace('\n', '')
+
+    @staticmethod
+    def build(project):
+        template = [
+            'docker', 'build', '-t',
+            f'local/{project.slug}',
+            f'{settings.GIT_PROJECTS_ROUTE}/{project.git_name}/.']
+        return DockerClient.call(template)
 
     @staticmethod
     def _stop(container_model):

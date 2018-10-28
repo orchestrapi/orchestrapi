@@ -2,7 +2,8 @@ import os
 from .secret import *
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+BASE_DIR = os.path.dirname(os.path.dirname(
+    os.path.dirname(os.path.abspath(__file__))))
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = '$-tk@aj!^k#l@*7k23an5x+26#@mq0pwv85o&-#)cau%=z8x9m'
@@ -119,3 +120,8 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # CELERY
 
 CELERY_BROKER_URL = RABBIT_URI
+
+# FILE SYSTEM
+
+NGINX_ROUTE = os.path.join(BASE_DIR, '../conf-dev/nginx')
+GIT_PROJECTS_ROUTE = os.path.join(BASE_DIR, '../conf-dev/git')

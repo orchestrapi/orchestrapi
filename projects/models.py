@@ -1,23 +1,19 @@
-from django.db import models
-
 from django.contrib.postgres.fields import JSONField
+from django.db import models
 from django.template import Context, loader
 
-from core.behaviours import UUIDIndexBehaviour, TimestampableBehaviour, SlugableBehaviour
-
-from projects import tasks
+from core.behaviours import (SlugableBehaviour, TimestampableBehaviour,
+                             UUIDIndexBehaviour)
 
 
 class Project(SlugableBehaviour, TimestampableBehaviour, UUIDIndexBehaviour, models.Model):
 
     name = models.CharField(max_length=255, verbose_name="Name")
     git_url = models.URLField(blank=True, null=True)
-
+    git_name = models.CharField(max_length=50, blank=True, null=True)
     domain = models.CharField(max_length=255, blank=True, null=True)
     data = JSONField(default=dict(), blank=True)
-
-    def build_image(self):
-        tasks.build_image_task.delay(self.id)
+    cloned = models.BooleanField(default=False)
 
     @property
     def ready_to_publish(self):
@@ -61,7 +57,7 @@ class Project(SlugableBehaviour, TimestampableBehaviour, UUIDIndexBehaviour, mod
         version = self.data.get('version', 'latest')
 
         if self.data.get('local_build'):
-            image = f'local/{self.data.get("image", self.slug)}'
+            image = f'local/{self.slug}'
         else:
             image = f'{self.data.get("image", self.slug)}'
         try:
