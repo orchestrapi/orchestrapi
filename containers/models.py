@@ -8,7 +8,7 @@ from core.behaviours import UUIDIndexBehaviour, TimestampableBehaviour
 from projects.models import Project
 
 
-class Container(TimestampableBehaviour,UUIDIndexBehaviour, models.Model):
+class Container(TimestampableBehaviour, UUIDIndexBehaviour, models.Model):
 
     container_id = models.CharField(max_length=20, null=True, blank=True)
     name = models.CharField(max_length=30)
@@ -25,12 +25,13 @@ class Container(TimestampableBehaviour,UUIDIndexBehaviour, models.Model):
 
     @property
     def status(self):
-        if self.container_id:
+        if self.container_id and self.active:
             status = dclient.container_status(self.container_id)
             return status if status else 'stopped'
-        return None
 
     def start(self, instance_name=None):
+        if not self.active:
+            return
         result = dclient.docker_start(self, instance_name=instance_name)
         if not self.container_id:
             id = dclient.container_id(self.name)
@@ -38,16 +39,15 @@ class Container(TimestampableBehaviour,UUIDIndexBehaviour, models.Model):
                 self.container_id = id
                 self.save()
 
-
     @property
     def inspect(self):
-        return dclient.inspect(self)
+        if self.status:
+            return dclient.inspect(self)
 
     @property
     def ip(self):
         if self.status and self.status != 'stopped':
             return self.inspect['NetworkSettings']['IPAddress']
-        return None
 
     @property
     def port(self):

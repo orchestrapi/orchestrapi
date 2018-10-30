@@ -68,6 +68,7 @@ def project_update_nginx_conf(project_id):
         print(rendered, file=f)
 
     site_enabled_route = f'{settings.NGINX_ROUTE}/sites-enabled/{filename}'
-    if not os.path.exists(site_enabled_route):
-        ShellClient.call(['sudo','ln', '-s', conf_file_name, site_enabled_route])
-    ShellClient.call(['sudo', 'service', 'nginx', 'restart'])
+    if not settings.DEBUG:
+        if not os.path.exists(site_enabled_route):
+            ShellClient.call(['sudo','ln', '-s', conf_file_name, site_enabled_route])
+        ShellClient.call(['sudo', 'service', 'nginx', 'restart'])
