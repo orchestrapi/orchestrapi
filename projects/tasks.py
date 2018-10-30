@@ -4,6 +4,7 @@ from django.conf import settings
 
 from clients.docker import DockerClient as dclient
 from clients.git import GitClient as gclient
+from clients import ShellClient
 from core.celery import app
 
 from .models import Project
@@ -49,6 +50,8 @@ def project_clone_build_update(project_id):
     print(f"Desplagando todas las instancias del proyecto {project.name}")
     project.full_deploy()
 
+def generate_conf_name(project_slug):
+    return project_slug
 
 @app.task()
 def project_update_nginx_conf(project_id):
@@ -58,6 +61,13 @@ def project_update_nginx_conf(project_id):
         # TODO: Mandar mensaje de slack diciendo que no se puede generar la conf
         # y un log
         return
-    conf_file_name = f'{settings.NGINX_ROUTE}/sites-available/{project.slug}'
+
+    filename = generate_conf_name(project.slug)
+    conf_file_name = f'{settings.NGINX_ROUTE}/sites-available/{filename}'
     with open(conf_file_name, 'w') as f:
         print(rendered, file=f)
+
+    site_enabled_route = f'{settings.NGINX_ROUTE}/sites-enabled/{filename}'
+    if not os.path.exists(site_enabled_route):
+        ShellClient.call(['ln', '-s', conf_file_name, site_enabled_route])
+    ShellClient.call(['sudo', 'service', 'nginx', 'restart'])
