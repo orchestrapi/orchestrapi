@@ -26,6 +26,7 @@ INSTALLED_APPS = [
 
     'projects.apps.ProjectsConfig',
     'containers.apps.ContainersConfig',
+    'webhooks.apps.WebhooksConfig'
 
 ]
 
