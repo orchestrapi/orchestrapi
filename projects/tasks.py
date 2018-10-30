@@ -49,6 +49,7 @@ def project_clone_build_update(project_id):
     dclient.build(project)
     print(f"Desplagando todas las instancias del proyecto {project.name}")
     project.full_deploy()
+    project_update_nginx_conf(project.id)
 
 def generate_conf_name(project_slug):
     return project_slug
