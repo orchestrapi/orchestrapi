@@ -2,4 +2,4 @@
 from django.http import JsonResponse
 
 def manage_webhook(request, project_id):
-    return JsonResponse({})
+    return JsonResponse({}, status_code=200)
