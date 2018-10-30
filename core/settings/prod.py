@@ -13,5 +13,5 @@ STATIC_ROOT = os.path.join(PROJECT_ROOT, 'static')
 
 # FILE SYSTEM
 
-NGINX_ROUTE = '/etc/nginx/'
+NGINX_ROUTE = '/etc/nginx'
 GIT_PROJECTS_ROUTE = '/home/pi/docker_projects/'
