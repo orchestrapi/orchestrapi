@@ -3,8 +3,18 @@ python: 3.7
 dist: xenial
 sudo: true
 
+services: postgresql
+
+before_install:
+  - export DJANGO_SETTINGS_MODULE=core.settings.base
+  - export PYTHONPATH=$HOME/builds/KeoH/orchestrapi
+  - export PIP_USE_MIRRORS=true
+
 install: 
   - pip install pipenv
   - pipenv install
+
+before_script:
+  - psql -c "CREATE DATABASE mydb;" -U postgres
 
 script: pipenv run python manage.py test
