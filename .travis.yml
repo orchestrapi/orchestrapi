@@ -6,4 +6,4 @@ install:
   - pip install pipenv
   - pipenv install
 
-script: pipenv run python test
+script: pipenv run python manage.py test
