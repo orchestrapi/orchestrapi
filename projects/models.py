@@ -5,6 +5,8 @@ from django.template import Context, loader
 from core.behaviours import (SlugableBehaviour, TimestampableBehaviour,
                              UUIDIndexBehaviour)
 
+from images.models import Image
+
 
 class Project(SlugableBehaviour, TimestampableBehaviour, UUIDIndexBehaviour, models.Model):
 
@@ -13,6 +15,7 @@ class Project(SlugableBehaviour, TimestampableBehaviour, UUIDIndexBehaviour, mod
     git_name = models.CharField(max_length=50, blank=True, null=True)
     domain = models.CharField(max_length=255, blank=True, null=True)
     data = JSONField(default=dict, blank=True)
+    last_version = models.CharField(max_length=30, default="latest")
     params = JSONField(default=dict, blank=True)
     cloned = models.BooleanField(default=False)
 
@@ -49,6 +52,38 @@ class Project(SlugableBehaviour, TimestampableBehaviour, UUIDIndexBehaviour, mod
             }
             return template.render(ctx)
 
+    def get_or_create_last_image(self):
+        image, created = Image.objects.get_or_create(
+            name=self.data['image'], tag=self.last_version,
+            local_build=self.data.get('local_build', False),
+            last_version=True
+        )
+        return image
+
+    def _create_instance(self, version, instance_number):
+        image = Image.objects.get(
+            name=self.data['image'], tag=version,
+            local_build=self.data.get('local_build', False),
+            last_version=True)
+
+        if not image.built:
+            image.build(self.git_name)
+
+        params = self.params
+        if params.get('e'):
+            params['e']['INSTANCE'] = instance_number
+        else:
+            params['e'] = {'INSTANCE': instance_number}
+
+        name = f'{self.slug}_{instance_number}'
+
+        print(f"Creando el contenedor {name}. Guardando!")
+        return self.containers.model.objects.create(
+            name=name, image=image, instance_number=instance_number,
+            params=params, project=self
+        )
+
+
     def start_instance(self, instance_number):
 
         if self.containers.filter(name=f"{self.slug}_{instance_number}", active=True).exists():
@@ -59,25 +94,7 @@ class Project(SlugableBehaviour, TimestampableBehaviour, UUIDIndexBehaviour, mod
             return container.start()
 
         # hay q crearlo
-        params = self.params
-        if params.get('e'):
-            params['e']['INSTANCE'] = instance_number
-        else:
-            params['e'] = {'INSTANCE': instance_number}
-
-        name = f'{self.slug}_{instance_number}'
-        version = self.data.get('version', 'latest')
-
-        if self.data.get('local_build'):
-            image = f'local/{self.slug}'
-        else:
-            image = f'{self.data.get("image", self.slug)}'
-
-        print(f"Creando el contenedor {self.slug}_{instance_number}. Guardando!")
-        instance = self.containers.model.objects.create(
-            name=name, image=image, instance_number=instance_number,
-            version=version, params=params, project=self
-        )
+        instance = self._create_instance(self.get_or_create_last_image().tag, instance_number)
         return instance.start()
 
     def scale(self, num_of_instances):

@@ -8,6 +8,7 @@ from clients import ShellClient
 from core.celery import app
 
 from .models import Project
+from images.models import Image
 
 
 @app.task()
@@ -22,7 +23,7 @@ def git_clone_task(project_id):
 @app.task()
 def git_update_task(project_id):
     project = Project.objects.get(id=project_id)
-    gclient.update(project)
+    gclient.update(project.git_name)
 
 
 @app.task()
@@ -46,12 +47,14 @@ def project_clone_build_update(project_id):
         project.cloned = True
         project.save()
     print(f"Construyendo imagen del proyecto {project.name}")
-    dclient.build(project)
+    image = project.get_or_create_last_image()
+    image.build(project.git_name)
     print(f"Desplagando todas las instancias del proyecto {project.name}")
     project.full_deploy()
     project_update_nginx_conf(project.id)
 
 def generate_conf_name(project_slug):
+    # TODO: que el nombre de archivo que genere sea 001.basic en vez de basic
     return project_slug
 
 @app.task()
@@ -73,3 +76,8 @@ def project_update_nginx_conf(project_id):
         if not os.path.exists(site_enabled_route):
             ShellClient.call(['sudo','ln', '-s', conf_file_name, site_enabled_route])
         ShellClient.call(['sudo', 'service', 'nginx', 'restart'])
+
+@app.task()
+def project_build_last_image(image_id, git_name):
+    image = Image.objects.get(id=image_id)
+    image.build(git_name)

@@ -6,14 +6,15 @@ from clients.docker import DockerClient as dclient
 from core.behaviours import UUIDIndexBehaviour, TimestampableBehaviour
 
 from projects.models import Project
+from images.models import Image
 
 
 class Container(TimestampableBehaviour, UUIDIndexBehaviour, models.Model):
 
     container_id = models.CharField(max_length=20, null=True, blank=True)
     name = models.CharField(max_length=30)
-    image = models.CharField(max_length=30)
-    version = models.CharField(max_length=20, default="latest")
+    image = models.ForeignKey(Image, related_name='containers',
+                              null=True, blank=True, on_delete=models.DO_NOTHING)
     params = JSONField(default=dict, blank=True)
     instance_number = models.SmallIntegerField()
 
@@ -51,7 +52,7 @@ class Container(TimestampableBehaviour, UUIDIndexBehaviour, models.Model):
 
     @property
     def port(self):
-        return '8080'
+        return self.project.data.get('port', 8080)
 
     def remove(self):
         dclient.remove(self)
