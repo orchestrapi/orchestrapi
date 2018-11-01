@@ -19,5 +19,6 @@ build:
 filter:
     excluded_paths:
         - '*/test/*'
+        - '*/migrations/*'
     dependency_paths:
         - 'lib/*'
