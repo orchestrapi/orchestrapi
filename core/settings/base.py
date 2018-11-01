@@ -1,5 +1,4 @@
 import os
-from .secret import *
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(
@@ -70,11 +69,11 @@ WSGI_APPLICATION = 'core.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': DB_NAME,
-        'USER': DB_USER,
-        'PASSWORD': DB_PASSWORD,
-        'HOST': DB_HOST,
-        'PORT': '5432',
+        'NAME': os.environ.get('DB_NAME', '<database name>'),
+        'USER': os.environ.get('DB_USER', '<database user>'),
+        'PASSWORD': os.environ.get('DB_PASSWORD', '<database password>'),
+        'HOST': os.environ.get('DB_HOST', '<database password>'),
+        'PORT': os.environ.get('DB_PORT', '5432'),
     }
 }
 
@@ -122,7 +121,7 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # CELERY
 
-CELERY_BROKER_URL = RABBIT_URI
+CELERY_BROKER_URL = os.environ.get('RABBIT_URI', 'amqp://guest:guest@localhost:5672/')
 
 # FILE SYSTEM
 

@@ -3,3 +3,6 @@ logs/
 secret.py
 
 *.pyc
+
+.env
+.env-prod
