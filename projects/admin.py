@@ -1,33 +1,13 @@
 from django.contrib import admin
 from django.utils.safestring import mark_safe
+
+from .actions import build_last_image, deploy, update_nginx_conf
 from .models import Project
 
-from .tasks import project_clone_build_update, project_build_last_image, project_update_nginx_conf
-
-def deploy(modeladmin, request, queryset):
-    """Funcion temporal para deployar"""
-    for project in queryset:
-        project_clone_build_update.delay(project.id)        
-
-deploy.short_description = "Desplejar (Temporal)"
-
-def build_last_image(modeladmin, request, queryset):
-    """Constuye o pullea la ultima imagen de docker"""
-    for project in queryset:
-        image = project.get_or_create_last_image()
-        project_build_last_image.delay(image.id, project.git_name)
-
-build_last_image.short_description = "Construir ultima imagen"
-
-def update_nginx_conf(modeladmin, request, queryset):
-    """Actualiza la configuracion de NGINX"""
-    for project in queryset:
-        project_update_nginx_conf.delay(project.id)
-
-update_nginx_conf.short_description = "Actualiza la configuracion de NGINX"
 
 class ProjectAdmin(admin.ModelAdmin):
-    list_display = ['name', '_instance_number','_image', '_version', '_domain']
+    list_display = ['name', '_instance_number',
+                    '_image', '_version', '_domain']
     actions = [deploy, build_last_image, update_nginx_conf]
 
     def _instance_number(self, obj):

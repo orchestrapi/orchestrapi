@@ -2,13 +2,14 @@ import os
 
 from django.conf import settings
 
+from clients import ShellClient
 from clients.docker import DockerClient as dclient
 from clients.git import GitClient as gclient
-from clients import ShellClient
+from clients.tasks import send_slack_message
 from core.celery import app
+from images.models import Image
 
 from .models import Project
-from images.models import Image
 
 
 @app.task()
@@ -53,17 +54,23 @@ def project_clone_build_update(project_id):
     project.full_deploy()
     project_update_nginx_conf(project.id)
 
+
 def generate_conf_name(project_slug):
     # TODO: que el nombre de archivo que genere sea 001.basic en vez de basic
     return project_slug
+
 
 @app.task()
 def project_update_nginx_conf(project_id):
     project = Project.objects.get(id=project_id)
     rendered = project.render_nginx_conf()
     if not rendered:
-        # TODO: Mandar mensaje de slack diciendo que no se puede generar la conf
-        # y un log
+        send_slack_message.delay('clients/slack/error_updating_nginx_conf.txt', {
+            'project': {
+                'name': project.name
+            }
+        })
+        # TODO: Mandar un log
         return
 
     filename = generate_conf_name(project.slug)
@@ -74,10 +81,25 @@ def project_update_nginx_conf(project_id):
     site_enabled_route = f'{settings.NGINX_ROUTE}/sites-enabled/{filename}'
     if not settings.DEBUG:
         if not os.path.exists(site_enabled_route):
-            ShellClient.call(['sudo','ln', '-s', conf_file_name, site_enabled_route])
+            ShellClient.call(
+                ['sudo', 'ln', '-s', conf_file_name, site_enabled_route])
         ShellClient.call(['sudo', 'service', 'nginx', 'restart'])
+        send_slack_message.delay('clients/slack/successfull_nginx_restart.txt', {
+            'project': {
+                'name': project.name
+            }
+        })
+
 
 @app.task()
 def project_build_last_image(image_id, git_name):
     image = Image.objects.get(id=image_id)
     image.build(git_name)
+    send_slack_message.delay('clients/slack/image_built.txt', {
+        'image': {
+            'name': image.name,
+            'tag': image.tag,
+            'size': image.size or "_/-\_",
+            'local_build': image.local_build
+        }
+    })

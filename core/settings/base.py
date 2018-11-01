@@ -23,6 +23,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
+    'clients',
+
     'projects.apps.ProjectsConfig',
     'containers.apps.ContainersConfig',
     'images.apps.ImagesConfig',
@@ -139,3 +141,9 @@ CELERY_BROKER_URL = os.environ.get('RABBIT_URI', 'amqp://guest:guest@localhost:5
 
 NGINX_ROUTE = os.path.join(BASE_DIR, '../conf-dev/nginx')
 GIT_PROJECTS_ROUTE = os.path.join(BASE_DIR, '../conf-dev/git')
+
+# SLACK
+
+SLACK_BOT_ACTIVE = os.environ.get('SLACK_BOT_ACTIVE', 'False') == 'True'
+SLACKBOT_KEY = os.environ.get('SLACKBOT_KEY', 'your-token')
+SLACKBOT_SECRET = os.environ.get('SLACKBOT_SECRET', 'your-secret')

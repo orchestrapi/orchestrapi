@@ -1,0 +1,1 @@
+La configuración de Nginx para el proyecto *{{project.name}}* se ha completado.
