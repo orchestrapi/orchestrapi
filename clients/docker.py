@@ -71,6 +71,11 @@ class DockerClient(ShellClient):
         return DockerClient.call(template).replace('\n', '')
 
     @staticmethod
+    def image_id_and_size(image_name):
+        template = ['docker', 'images', image_name, '--format', '"{{.ID}}\t{{.Size}}"']
+        return DockerClient.call(template).replace('\n', '').replace('"', '').split('\t')
+
+    @staticmethod
     def _stop(container_model):
         template = ['docker', 'stop', container_model.name]
         return DockerClient.call(template).replace('\n', '')

@@ -58,6 +58,10 @@ class Project(SlugableBehaviour, TimestampableBehaviour, UUIDIndexBehaviour, mod
             local_build=self.data.get('local_build', False),
             last_version=True
         )
+        if created:
+            Image.objects.filter(
+                name=self.data['image'], last_version=True).exclude(
+                    id=image.id).update(last_version=False)
         return image
 
     def _create_instance(self, version, instance_number):

@@ -49,7 +49,8 @@ def project_clone_build_update(project_id):
         project.save()
     print(f"Construyendo imagen del proyecto {project.name}")
     image = project.get_or_create_last_image()
-    image.build(project.git_name)
+    if not image.built:
+        image.build(project.git_name)
     print(f"Desplagando todas las instancias del proyecto {project.name}")
     project.full_deploy()
     project_update_nginx_conf(project.id)

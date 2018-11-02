@@ -1,7 +1,10 @@
 from core.celery import app
 
 from projects.models import Project
+from images.models import Image
 from clients.tasks import send_slack_message
+
+from projects.tasks import project_build_last_image
 
 def is_new_version_webhook(changes):
     return changes['type'] == 'tag'
@@ -33,3 +36,13 @@ def process_webhook(message, project_id):
     project.last_version = new_version['tag']
     project.save()
     send_slack_message.delay('clients/slack/new_tag_message.txt', new_version)
+    
+    # Create image object and build
+    Image.objects.filter(name=project.data.get('image'), last_version=True).update(last_version=False)
+    image, created = Image.objects.get_or_create(
+        name=project.data.get('image'), tag=new_version['tag'],
+        local_build=project.data.get('local_build', True)
+    )
+    image.last_version = True
+    image.save()
+    project_build_last_image.delay(image.id, project.git_name)
