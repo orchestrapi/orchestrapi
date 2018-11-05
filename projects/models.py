@@ -43,7 +43,10 @@ class Project(SlugableBehaviour, TimestampableBehaviour, UUIDIndexBehaviour, mod
 
     def render_nginx_conf(self):
         if self.ready_to_publish:
-            template = loader.get_template('projects/nginx/base.conf')
+            if self.data.get('ssl', False):
+                template = loader.get_template('projects/nginx/ssl.conf')
+            else:
+                template = loader.get_template('projects/nginx/base.conf')
             ctx = {
                 "containers": [cont for cont in self.containers.all() if cont.status != 'stopped'],
                 "project_slug": self.slug,
