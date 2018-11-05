@@ -1,5 +1,4 @@
 """Slack client module."""
-import json
 
 from django.conf import settings
 from django.template import loader
