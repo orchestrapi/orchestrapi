@@ -11,6 +11,10 @@ from images.models import Image
 
 from .models import Project
 
+# TODO: Tarea para generar los certificados https
+# sudo letsencrypt certonly --standalone -d loggerlady.paquito.ninja
+# * Tarea para renover el certificado
+
 
 @app.task()
 def git_clone_task(project_id):
