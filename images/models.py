@@ -24,7 +24,7 @@ class Image(TimestampableBehaviour, UUIDIndexBehaviour, models.Model):
             else:
                 dclient.pull_from_dockerhub(self.image_tag)
 
-            id, size = dclient.image_id_and_size(self.name)
+            id, size = dclient.image_id_and_size(f'{self.name}:{self.tag}')
             if id:
                 self.image_id = id
             self.size = size
