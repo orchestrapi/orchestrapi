@@ -2,9 +2,9 @@ from django.contrib.postgres.fields import JSONField
 from django.db import models
 from django.template import loader
 
+from clients.tasks import send_slack_message
 from core.behaviours import (SlugableBehaviour, TimestampableBehaviour,
                              UUIDIndexBehaviour)
-
 from images.models import Image
 
 
@@ -87,6 +87,9 @@ class Project(SlugableBehaviour, TimestampableBehaviour, UUIDIndexBehaviour, mod
         name = f'{self.slug}_{instance_number}'
 
         print(f"Creando el contenedor {name}. Guardando!")
+        send_slack_message.delay('clients/slack/message.txt', {
+            'message': f'Creando el contenedor {name}.'
+        })
         return self.containers.model.objects.create(
             name=name, image=image, instance_number=instance_number,
             params=params, project=self
@@ -100,6 +103,9 @@ class Project(SlugableBehaviour, TimestampableBehaviour, UUIDIndexBehaviour, mod
             container = self.containers.get(
                 name=f"{self.slug}_{instance_number}", active=True)
             print(f"Ya existe el contenedor {self.slug}_{instance_number}. Arrancando!")
+            send_slack_message.delay('clients/slack/message.txt', {
+                'message': f'Ya existe el contenedor {self.slug}_{instance_number}. Arrancando!'
+            })
             return container.start()
 
         # hay q crearlo
@@ -109,23 +115,29 @@ class Project(SlugableBehaviour, TimestampableBehaviour, UUIDIndexBehaviour, mod
     def scale(self, num_of_instances):
         if self.data.get('max_instances', 1) < num_of_instances or num_of_instances < 0:
             return
-        print("pasa el primer if")
         instances = self.running_containers.order_by('-instance_number')
-        print("las instancias son", instances)
         if num_of_instances > instances.count():
             start_num_of_instances = instances.first().instance_number + \
                 1 if instances.count() > 0 else 1
-            print("start_num_of_instances", start_num_of_instances)
             for i in range(start_num_of_instances, num_of_instances + 1):
                 print(f"Va a levantarse la instancia {i}")
+                send_slack_message.delay('clients/slack/message.txt', {
+                    'message': f'Va a levantarse la instancia {i}'
+                })
                 self.start_instance(i)
         elif num_of_instances == instances.count():
             print(f"Ya estan levantadas las {num_of_instances} instancias!")
+            send_slack_message.delay('clients/slack/message.txt', {
+                'message': f'Ya estan levantadas las {num_of_instances} instancias!'
+            })
         else:
             to_stop_instances = instances.count() - num_of_instances
             instances_to_stop = instances[:to_stop_instances]
             for instance in instances_to_stop:
                 print(f"Se va a parar {instance.name}")
+                send_slack_message.delay('clients/slack/message.txt', {
+                    'message': f'Se va a parar {instance.name}'
+                })
                 instance.stop()
 
     def full_deploy(self):
