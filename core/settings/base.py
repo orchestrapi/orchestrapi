@@ -147,3 +147,7 @@ GIT_PROJECTS_ROUTE = os.path.join(BASE_DIR, '../conf-dev/git')
 SLACK_BOT_ACTIVE = os.environ.get('SLACK_BOT_ACTIVE', 'False') == 'True'
 SLACKBOT_KEY = os.environ.get('SLACKBOT_KEY', 'your-token')
 SLACKBOT_SECRET = os.environ.get('SLACKBOT_SECRET', 'your-secret')
+
+# Login / Logout settings
+
+LOGOUT_REDIRECT_URL = '/'
