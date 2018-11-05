@@ -79,6 +79,8 @@ class Project(SlugableBehaviour, TimestampableBehaviour, UUIDIndexBehaviour, mod
         else:
             params['e'] = {'INSTANCE': instance_number}
 
+        params['e']['VERSION'] = image.tag
+
         name = f'{self.slug}_{instance_number}'
 
         print(f"Creando el contenedor {name}. Guardando!")
