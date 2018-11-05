@@ -1,10 +1,15 @@
-
+"""Helper functions for clients app."""
 from dataclasses import dataclass
+
 
 @dataclass
 class Container:
+
+    """Container data class."""
+
     def __init__(self, id, image, status, name):
-        self.id = id
+        """Init method."""
+        self.id = id  # noqa
         self.image = image
         self.status = status
         self.name = name
