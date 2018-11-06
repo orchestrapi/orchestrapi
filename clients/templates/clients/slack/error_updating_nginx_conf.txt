@@ -1,2 +1,2 @@
-Ha ocurrido un error en el despliegue de *{{project.name}}*
+Ha ocurrido un error en el despliegue de *{{app.name}}*
 Ha fallado el intento de configurar NGINX.

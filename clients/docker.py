@@ -49,12 +49,12 @@ class DockerClient(ShellClient):
         return DockerClient.call(template).replace('\n', '')
 
     @staticmethod
-    def build(project):
+    def build(app):
         """Builds a container. DEPRECATED"""
         template = [
             'docker', 'build', '-t',
-            f'local/{project.slug}',
-            f'{settings.GIT_PROJECTS_ROUTE}/{project.git_name}/.']
+            f'local/{app.slug}',
+            f'{settings.GIT_PROJECTS_ROUTE}/{app.git_name}/.']
         return DockerClient.call(template)
 
     @staticmethod

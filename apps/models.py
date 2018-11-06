@@ -5,10 +5,9 @@ from django.template import loader
 from clients.tasks import send_slack_message
 from core.behaviours import (SlugableBehaviour, TimestampableBehaviour,
                              UUIDIndexBehaviour)
-from images.models import Image
 
 
-class Project(SlugableBehaviour, TimestampableBehaviour, UUIDIndexBehaviour, models.Model):
+class App(SlugableBehaviour, TimestampableBehaviour, UUIDIndexBehaviour, models.Model):
 
     name = models.CharField(max_length=255, verbose_name="Name")
     git_url = models.URLField(blank=True, null=True)
@@ -44,31 +43,31 @@ class Project(SlugableBehaviour, TimestampableBehaviour, UUIDIndexBehaviour, mod
     def render_nginx_conf(self):
         if self.ready_to_publish:
             if self.data.get('ssl', False):
-                template = loader.get_template('projects/nginx/ssl.conf')
+                template = loader.get_template('apps/nginx/ssl.conf')
             else:
-                template = loader.get_template('projects/nginx/base.conf')
+                template = loader.get_template('apps/nginx/base.conf')
             ctx = {
                 "containers": [cont for cont in self.containers.all() if cont.status != 'stopped'],
-                "project_slug": self.slug,
+                "app_slug": self.slug,
                 "domains": self.domain,
                 "base_route": '/home/pi/webs'
             }
             return template.render(ctx)
 
     def get_or_create_last_image(self):
-        image, created = Image.objects.get_or_create(
+        image, created = self.images.get_or_create(
             name=self.data['image'], tag=self.last_version,
             local_build=self.data.get('local_build', False),
             last_version=True
         )
         if created:
-            Image.objects.filter(
+            self.images.objects.filter(
                 name=self.data['image'], last_version=True).exclude(
                     id=image.id).update(last_version=False)
         return image
 
     def _create_instance(self, version, instance_number):
-        image = Image.objects.get(
+        image = self.images.get(
             name=self.data['image'], tag=version,
             local_build=self.data.get('local_build', False),
             last_version=True)
@@ -92,24 +91,25 @@ class Project(SlugableBehaviour, TimestampableBehaviour, UUIDIndexBehaviour, mod
         })
         return self.containers.model.objects.create(
             name=name, image=image, instance_number=instance_number,
-            params=params, project=self
+            params=params, app=self
         )
 
-
     def start_instance(self, instance_number):
-
+        from images.models import Image
         if self.containers.filter(name=f"{self.slug}_{instance_number}", active=True).exists():
             # ya existe el contenedor
             container = self.containers.get(
                 name=f"{self.slug}_{instance_number}", active=True)
-            print(f"Ya existe el contenedor {self.slug}_{instance_number}. Arrancando!")
+            print(
+                f"Ya existe el contenedor {self.slug}_{instance_number}. Arrancando!")
             send_slack_message.delay('clients/slack/message.txt', {
                 'message': f'Ya existe el contenedor {self.slug}_{instance_number}. Arrancando!'
             })
             return container.start()
 
         # hay q crearlo
-        instance = self._create_instance(self.get_or_create_last_image().tag, instance_number)
+        instance = self._create_instance(
+            self.get_or_create_last_image().tag, instance_number)
         return instance.start()
 
     def scale(self, num_of_instances):

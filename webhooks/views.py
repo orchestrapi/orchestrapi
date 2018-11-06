@@ -8,7 +8,7 @@ from .tasks import process_webhook
 
 
 @csrf_exempt
-def manage_webhook(request, project_id):
+def manage_webhook(request, app_id):
     message = json.loads(request.body)
-    process_webhook.delay(message, project_id)
+    process_webhook.delay(message, app_id)
     return JsonResponse({}, status=200)

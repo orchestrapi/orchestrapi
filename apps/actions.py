@@ -1,23 +1,23 @@
-from .tasks import project_clone_build_update, project_build_last_image, project_update_nginx_conf
+from .tasks import app_clone_build_update, app_build_last_image, app_update_nginx_conf
 
 
 def deploy(modeladmin, request, queryset):
     """Funcion temporal para deployar"""
-    for project in queryset:
-        project_clone_build_update.delay(project.id)
+    for app in queryset:
+        app_clone_build_update.delay(app.id)
 
 
 def build_last_image(modeladmin, request, queryset):
     """Constuye o pullea la ultima imagen de docker"""
-    for project in queryset:
-        image = project.get_or_create_last_image()
-        project_build_last_image.delay(image.id, project.git_name)
+    for app in queryset:
+        image = app.get_or_create_last_image()
+        app_build_last_image.delay(image.id, app.git_name)
 
 
 def update_nginx_conf(modeladmin, request, queryset):
     """Actualiza la configuracion de NGINX"""
-    for project in queryset:
-        project_update_nginx_conf.delay(project.id)
+    for app in queryset:
+        app_update_nginx_conf.delay(app.id)
 
 
 deploy.short_description = "Desplejar (Temporal)"

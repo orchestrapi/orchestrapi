@@ -25,7 +25,7 @@ INSTALLED_APPS = [
 
     'clients',
 
-    'projects.apps.ProjectsConfig',
+    'apps.apps.AppsConfig',
     'containers.apps.ContainersConfig',
     'images.apps.ImagesConfig',
 

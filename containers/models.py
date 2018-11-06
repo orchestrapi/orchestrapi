@@ -5,7 +5,7 @@ from clients.docker import DockerClient as dclient
 
 from core.behaviours import UUIDIndexBehaviour, TimestampableBehaviour
 
-from projects.models import Project
+from apps.models import App
 from images.models import Image
 
 
@@ -13,13 +13,15 @@ class Container(TimestampableBehaviour, UUIDIndexBehaviour, models.Model):
 
     container_id = models.CharField(max_length=20, null=True, blank=True)
     name = models.CharField(max_length=30)
-    image = models.ForeignKey(Image, related_name='containers',
-                              null=True, blank=True, on_delete=models.DO_NOTHING)
     params = JSONField(default=dict, blank=True)
     instance_number = models.SmallIntegerField()
 
-    project = models.ForeignKey(
-        Project, blank=True, null=True,
+    app = models.ForeignKey(
+        App, blank=True, null=True,
+        related_name='containers', on_delete=models.CASCADE)
+
+    image = models.ForeignKey(
+        Image, blank=True, null=True,
         related_name='containers', on_delete=models.CASCADE)
 
     active = models.BooleanField(default=True)
@@ -52,10 +54,14 @@ class Container(TimestampableBehaviour, UUIDIndexBehaviour, models.Model):
 
     @property
     def port(self):
-        return self.project.data.get('port', 8080)
+        return self.app.data.get('port', 8080)
 
     def remove(self):
         dclient.remove(self)
+
+    def delete(self, **kwargs):
+        self.remove()
+        return super(Container, self).delete(**kwargs)
 
     def stop_all(self):
         instances = Container.objects.filter(image=self.image)

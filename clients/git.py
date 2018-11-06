@@ -14,9 +14,9 @@ class GitClient(ShellClient):
         GitClient.call(template)
 
     @staticmethod
-    def clone(project):
-        """Clone the project repo."""
-        template = ['git', '-C', f'{settings.GIT_PROJECTS_ROUTE}', 'clone', f'{project.git_url}']
+    def clone(app):
+        """Clone the app repo."""
+        template = ['git', '-C', f'{settings.GIT_PROJECTS_ROUTE}', 'clone', f'{app.git_url}']
         GitClient.call(template)
 
     @staticmethod
