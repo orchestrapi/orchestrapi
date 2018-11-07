@@ -16,7 +16,7 @@ class Image(TimestampableBehaviour, UUIDIndexBehaviour, models.Model):
     last_version = models.BooleanField(default=True)
 
     app = models.ForeignKey(App, related_name='images',
-                              null=True, blank=True, on_delete=models.DO_NOTHING)
+                              null=True, blank=True, on_delete=models.CASCADE)
 
     @property
     def image_tag(self):

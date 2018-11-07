@@ -6,21 +6,33 @@ from clients.tasks import send_slack_message
 from core.behaviours import (SlugableBehaviour, TimestampableBehaviour,
                              UUIDIndexBehaviour)
 
+def default_data():
+    return {
+    'cloned': False,
+    'local_build': True,
+    'max_instances': 1,
+    'ssl': True,
+    'domain': 'example.com',
+    'git': {
+        'name': '',
+        'url': ''
+    }
+}
 
 class App(SlugableBehaviour, TimestampableBehaviour, UUIDIndexBehaviour, models.Model):
 
     name = models.CharField(max_length=255, verbose_name="Name")
-    git_url = models.URLField(blank=True, null=True)
-    git_name = models.CharField(max_length=50, blank=True, null=True)
-    domain = models.CharField(max_length=255, blank=True, null=True)
-    data = JSONField(default=dict, blank=True)
-    last_version = models.CharField(max_length=30, default="latest")
+    data = JSONField(default=default_data, blank=True)
     params = JSONField(default=dict, blank=True)
-    cloned = models.BooleanField(default=False)
 
     @property
     def ready_to_publish(self):
         return self.git_url != None and self.domain != None and self.running_containers.count() > 0
+
+    @property
+    def last_version(self):
+        image = self.images.get(last_version=True)
+        return image.tag if image else '-'
 
     @property
     def running_containers(self):
@@ -55,20 +67,16 @@ class App(SlugableBehaviour, TimestampableBehaviour, UUIDIndexBehaviour, models.
             return template.render(ctx)
 
     def get_or_create_last_image(self):
-        image, created = self.images.get_or_create(
-            name=self.data['image'], tag=self.last_version,
-            local_build=self.data.get('local_build', False),
-            last_version=True
-        )
+        image, created = self.images.get_or_create(last_version=True)
         if created:
             self.images.objects.filter(
-                name=self.data['image'], last_version=True).exclude(
+                last_version=True).exclude(
                     id=image.id).update(last_version=False)
         return image
 
     def _create_instance(self, version, instance_number):
         image = self.images.get(
-            name=self.data['image'], tag=version,
+            tag=version,
             local_build=self.data.get('local_build', False),
             last_version=True)
 
