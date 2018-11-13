@@ -42,12 +42,7 @@ def process_bitbucket_webhook_task(message, app_id):
     # Create image object and build
     Image.objects.filter(name=app.data.get('image'),
                          last_version=True).update(last_version=False)
-    image, created = Image.objects.get_or_create(
-        name=app.data.get('image'), tag=new_version['tag'],
-        local_build=app.data.get('local_build', True)
-    )
-    image.last_version = True
-    image.save()
+    image = app.get_or_create_last_image()
     app_build_last_image.delay(image.id, app.git.get("name"))
 
 
