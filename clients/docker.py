@@ -1,5 +1,6 @@
 """Docker client module."""
 import json
+from subprocess import CalledProcessError
 
 from django.conf import settings
 
@@ -97,13 +98,21 @@ class DockerClient(ShellClient):
     def remove(container_model):
         """Removes a container."""
         template = ['docker', 'rm', '-f', container_model.name]
-        DockerClient.call(template)
+
+        try:
+            DockerClient.call(template)
+        except CalledProcessError:
+            print(f'Container {container_model.name} does not exists.')
+        
 
     @staticmethod
     def remove_image(image_model):
         """Removes an image."""
         template = ['docker', 'rmi', '-f', image_model.image_tag]
-        DockerClient.call(template)
+        try:
+            DockerClient.call(template)
+        except CalledProcessError:
+            print(f'Image {image_model.image_tag} does not exists.')
 
     @staticmethod
     def docker_start(container_model, instance_name=None):

@@ -8,4 +8,5 @@ class ImageAdmin(admin.ModelAdmin):
                     'size', 'local_build', 'built', 'last_version']
     list_filter = ['last_version', 'app']
 
+
 admin.site.register(Image, ImageAdmin)

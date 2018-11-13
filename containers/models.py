@@ -1,11 +1,9 @@
+from django.contrib.postgres.fields import JSONField
 from django.db import models
 
-from django.contrib.postgres.fields import JSONField
-from clients.docker import DockerClient as dclient
-
-from core.behaviours import UUIDIndexBehaviour, TimestampableBehaviour
-
 from apps.models import App
+from clients.docker import DockerClient as dclient
+from core.behaviours import TimestampableBehaviour, UUIDIndexBehaviour
 from images.models import Image
 
 
@@ -56,11 +54,8 @@ class Container(TimestampableBehaviour, UUIDIndexBehaviour, models.Model):
     def port(self):
         return self.app.data.get('port', 8080)
 
-    def remove(self):
-        dclient.remove(self)
-
     def delete(self, **kwargs):
-        self.remove()
+        dclient.remove(self)
         return super(Container, self).delete(**kwargs)
 
     def stop_all(self):

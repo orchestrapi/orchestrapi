@@ -108,3 +108,32 @@ def app_build_last_image(image_id, git_name):
             'local_build': image.local_build
         }
     })
+
+
+@app.task()
+def app_update_instances_task(app_id):
+    app = App.objects.get(id=app_id)
+    update_policy = app.data.get('update_policy', 'manual')
+
+    if update_policy == 'manual':
+        send_slack_message.delay('clients/slack/message.txt', {
+            'message': f'Hay una nueva version que actualizar *manualmente* en el proyecto {app.name}.'
+        })
+        return
+    
+    send_slack_message.delay('clients/slack/message.txt', {
+        'message': f'Comienza la actualización *automatica* de {app.name}.'
+    })
+
+    old_containers = app.containers.filter(active=True)
+    for old_cont in old_containers:
+        old_cont.stop()
+        old_cont.active = False
+        old_cont.save()
+        dclient.remove(old_cont)
+        app.start_instance(old_cont.instance_number)
+
+    send_slack_message.delay('clients/slack/message.txt', {
+        'message': f'actualización *automatica* de {app.name} completada.'
+    })
+    app_update_nginx_conf(app_id)
