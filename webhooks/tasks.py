@@ -4,7 +4,7 @@ from apps.models import App
 from images.models import Image
 from clients.tasks import send_slack_message
 
-from apps.tasks import app_build_last_image
+from apps.tasks import app_build_last_image, app_update_instances_task
 
 
 @app.task()
@@ -52,3 +52,5 @@ def process_webhook_task(repository, message, app_id):
         process_github_webhook_task.delay(message, app_id)
     elif repository == 'bitbucket':
         process_bitbucket_webhook_task.delay(message, app_id)
+
+    app_update_instances_task.delay(app_id)
