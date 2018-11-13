@@ -8,12 +8,12 @@ from apps.tasks import app_build_last_image
 
 
 @app.task()
-def process_bitbucket_webhook_task(message, app_id):
+def process_github_webhook_task(message, app_id):
     pass
 
 
 @app.task()
-def process_github_webhook_task(message, app_id):
+def process_bitbucket_webhook_task(message, app_id):
     changes = message['push']['changes'][0]['new']
 
     if not changes['type'] == 'tag':
