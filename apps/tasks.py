@@ -126,12 +126,15 @@ def app_update_instances_task(app_id):
     })
 
     old_containers = app.containers.filter(active=True)
-    for old_cont in old_containers:
-        old_cont.stop()
-        old_cont.active = False
-        old_cont.save()
-        dclient.remove(old_cont)
-        app.start_instance(old_cont.instance_number)
+    if old_containers.exists():
+        for old_cont in old_containers:
+            old_cont.stop()
+            old_cont.active = False
+            old_cont.save()
+            dclient.remove(old_cont)
+            app.start_instance(old_cont.instance_number)
+    else:
+        app.full_deploy()
 
     send_slack_message.delay('clients/slack/message.txt', {
         'message': f'actualización *automatica* de {app.name} completada.'
