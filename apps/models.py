@@ -116,7 +116,7 @@ class App(SlugableBehaviour, TimestampableBehaviour, UUIDIndexBehaviour, models.
             last_version=True)
 
         if not image.built:
-            image.build(self.git_name)
+            image.build(self.git.get('name'))
 
         params = self.params
         if params.get('e'):
