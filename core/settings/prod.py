@@ -14,4 +14,4 @@ STATIC_ROOT = os.path.join(PROJECT_ROOT, 'static')
 # FILE SYSTEM
 
 NGINX_ROUTE = '/etc/nginx'
-GIT_PROJECTS_ROUTE = os.environ.get('GIT_PROJECTS_ROUTE', '/path/to/git/projects')
+GIT_PROJECTS_ROUTE = os.environ.get('GIT_PROJECTS_ROUTE', '/path/to/git/apps')

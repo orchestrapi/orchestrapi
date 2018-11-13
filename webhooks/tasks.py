@@ -1,23 +1,25 @@
 from core.celery import app
 
-from projects.models import Project
+from apps.models import App
 from images.models import Image
 from clients.tasks import send_slack_message
 
-from projects.tasks import project_build_last_image
-
-def is_new_version_webhook(changes):
-    return changes['type'] == 'tag'
+from apps.tasks import app_build_last_image
 
 
 @app.task()
-def process_webhook(message, project_id):
+def process_bitbucket_webhook_task(message, app_id):
+    pass
+
+
+@app.task()
+def process_github_webhook_task(message, app_id):
     changes = message['push']['changes'][0]['new']
 
-    if not is_new_version_webhook(changes):
+    if not changes['type'] == 'tag':
         return
 
-    project = Project.objects.get(id=project_id)
+    app = App.objects.get(id=app_id)
 
     new_version = {
         'tag': changes['name'].replace('v', ''),
@@ -27,22 +29,31 @@ def process_webhook(message, project_id):
             'username': changes['target']['author']['user']['username'],
             'full_name': changes['target']['author']['user']['display_name']
         },
-        'project': {
-            'name': project.name,
-            'domain': f'http://{project.domain}'
+        'app': {
+            'name': app.name,
+            'domain': f'http://{app.domain}'
         }
     }
 
-    project.last_version = new_version['tag']
-    project.save()
+    app.data['version'] = new_version['tag']
+    app.save()
     send_slack_message.delay('clients/slack/new_tag_message.txt', new_version)
-    
+
     # Create image object and build
-    Image.objects.filter(name=project.data.get('image'), last_version=True).update(last_version=False)
+    Image.objects.filter(name=app.data.get('image'),
+                         last_version=True).update(last_version=False)
     image, created = Image.objects.get_or_create(
-        name=project.data.get('image'), tag=new_version['tag'],
-        local_build=project.data.get('local_build', True)
+        name=app.data.get('image'), tag=new_version['tag'],
+        local_build=app.data.get('local_build', True)
     )
     image.last_version = True
     image.save()
-    project_build_last_image.delay(image.id, project.git_name)
+    app_build_last_image.delay(image.id, app.git.get("name"))
+
+
+@app.task()
+def process_webhook_task(repository, message, app_id):
+    if repository == 'github':
+        process_github_webhook_task.delay(message, app_id)
+    elif repository == 'bitbucket':
+        process_bitbucket_webhook_task.delay(message, app_id)

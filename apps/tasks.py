@@ -9,7 +9,7 @@ from clients.tasks import send_slack_message
 from core.celery import app
 from images.models import Image
 
-from .models import Project
+from .models import App
 
 # TODO: Tarea para generar los certificados https
 # sudo letsencrypt certonly --standalone -d loggerlady.paquito.ninja
@@ -17,68 +17,68 @@ from .models import Project
 
 
 @app.task()
-def git_clone_task(project_id):
-    project = Project.objects.get(id=project_id)
-    if not project.cloned:
-        gclient.clone(project)
-        project.cloned = True
-        project.save()
+def git_clone_task(app_id):
+    app = App.objects.get(id=app_id)
+    if not app.cloned:
+        gclient.clone(app)
+        app.cloned = True
+        app.save()
 
 
 @app.task()
-def git_update_task(project_id):
-    project = Project.objects.get(id=project_id)
-    gclient.update(project.git_name)
+def git_update_task(app_id):
+    app = App.objects.get(id=app_id)
+    gclient.update(app.git.get("name"))
 
 
 @app.task()
-def docker_build_task(project_id):
-    project = Project.objects.get(id=project_id)
-    dclient.build(project)
+def docker_build_task(app_id):
+    app = App.objects.get(id=app_id)
+    dclient.build(app)
 
 
 @app.task()
-def project_full_deploy_task(project_id):
-    project = Project.objects.get(id=project_id)
-    project.full_deploy()
+def app_full_deploy_task(app_id):
+    app = App.objects.get(id=app_id)
+    app.full_deploy()
 
 
 @app.task()
-def project_clone_build_update(project_id):
-    project = Project.objects.get(id=project_id)
-    if not project.cloned:
-        print(f"Clonando proyecto {project.name}")
-        gclient.clone(project)
-        project.cloned = True
-        project.save()
-    print(f"Construyendo imagen del proyecto {project.name}")
-    image = project.get_or_create_last_image()
+def app_clone_build_update(app_id):
+    app = App.objects.get(id=app_id)
+    if not app.cloned:
+        print(f"Clonando proyecto {app.name}")
+        gclient.clone(app)
+        app.cloned = True
+        app.save()
+    print(f"Construyendo imagen del proyecto {app.name}")
+    image = app.get_or_create_last_image()
     if not image.built:
-        image.build(project.git_name)
-    print(f"Desplagando todas las instancias del proyecto {project.name}")
-    project.full_deploy()
-    project_update_nginx_conf(project.id)
+        image.build(app.git.get("name"))
+    print(f"Desplagando todas las instancias del proyecto {app.name}")
+    app.full_deploy()
+    app_update_nginx_conf(app.id)
 
 
-def generate_conf_name(project_slug):
+def generate_conf_name(app_slug):
     # TODO: que el nombre de archivo que genere sea 001.basic en vez de basic
-    return project_slug
+    return app_slug
 
 
 @app.task()
-def project_update_nginx_conf(project_id):
-    project = Project.objects.get(id=project_id)
-    rendered = project.render_nginx_conf()
+def app_update_nginx_conf(app_id):
+    app = App.objects.get(id=app_id)
+    rendered = app.render_nginx_conf()
     if not rendered:
         send_slack_message.delay('clients/slack/error_updating_nginx_conf.txt', {
-            'project': {
-                'name': project.name
+            'app': {
+                'name': app.name
             }
         })
         # TODO: Mandar un log
         return
 
-    filename = generate_conf_name(project.slug)
+    filename = generate_conf_name(app.slug)
     conf_file_name = f'{settings.NGINX_ROUTE}/sites-available/{filename}'
     with open(conf_file_name, 'w') as f:
         print(rendered, file=f)
@@ -90,14 +90,14 @@ def project_update_nginx_conf(project_id):
                 ['sudo', 'ln', '-s', conf_file_name, site_enabled_route])
         ShellClient.call(['sudo', 'service', 'nginx', 'restart'])
         send_slack_message.delay('clients/slack/successfull_nginx_restart.txt', {
-            'project': {
-                'name': project.name
+            'app': {
+                'name': app.name
             }
         })
 
 
 @app.task()
-def project_build_last_image(image_id, git_name):
+def app_build_last_image(image_id, git_name):
     image = Image.objects.get(id=image_id)
     image.build(git_name)
     send_slack_message.delay('clients/slack/image_built.txt', {

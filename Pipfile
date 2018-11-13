@@ -11,6 +11,7 @@ django = "*"
 "psycopg2-binary" = "*"
 slackclient = "*"
 celery = "*"
+django-prettyjson = "*"
 
 [dev-packages]
 "autopep8" = "*"

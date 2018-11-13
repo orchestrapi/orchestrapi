@@ -1,3 +1,3 @@
-Hay una nueva version del proyecto *{{project.name}}*!!. :smile:
+Hay una nueva version del proyecto *{{app.name}}*!!. :smile:
 La version *{{tag}}* acaba de crearla *{{author.full_name}}({{author.username}})*.
 La descripción del commit es _{{message}}_. La versión se creó en {{date}}.

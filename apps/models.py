@@ -1,27 +1,54 @@
 from django.contrib.postgres.fields import JSONField
 from django.db import models
 from django.template import loader
+from django.conf import settings
 
 from clients.tasks import send_slack_message
 from core.behaviours import (SlugableBehaviour, TimestampableBehaviour,
                              UUIDIndexBehaviour)
-from images.models import Image
 
+def default_data():
+    return {
+    'cloned': False,
+    'local_build': True,
+    'max_instances': 1,
+    'ssl': True,
+    'domain': 'example.com',
+    'git': {
+        'name': '',
+        'url': ''
+    }
+}
 
-class Project(SlugableBehaviour, TimestampableBehaviour, UUIDIndexBehaviour, models.Model):
+class App(SlugableBehaviour, TimestampableBehaviour, UUIDIndexBehaviour, models.Model):
 
     name = models.CharField(max_length=255, verbose_name="Name")
-    git_url = models.URLField(blank=True, null=True)
-    git_name = models.CharField(max_length=50, blank=True, null=True)
-    domain = models.CharField(max_length=255, blank=True, null=True)
-    data = JSONField(default=dict, blank=True)
-    last_version = models.CharField(max_length=30, default="latest")
+    data = JSONField(default=default_data, blank=True)
     params = JSONField(default=dict, blank=True)
-    cloned = models.BooleanField(default=False)
 
     @property
     def ready_to_publish(self):
-        return self.git_url != None and self.domain != None and self.running_containers.count() > 0
+        return self.git.get("url") != None and self.domain != None and self.running_containers.count() > 0
+
+    @property
+    def last_version_registered(self):
+        image = self.images.get(last_version=True)
+        return image.tag if image else '-'
+
+    @property
+    def repository_type(self):
+        if '@bitbucket.org' in self.git.get('url'):
+            return 'bitbucket'
+        elif 'https://github.com' in self.git.get('url'):
+            return 'github'
+
+    @property
+    def webhook_url(self):
+        return f'https://orchestra.paquito.ninja/webhooks/{self.repository_type}/{self.id}'
+
+    @property
+    def domain(self):
+        return self.data.get('domain', None)
 
     @property
     def running_containers(self):
@@ -31,6 +58,18 @@ class Project(SlugableBehaviour, TimestampableBehaviour, UUIDIndexBehaviour, mod
             if not instance.status or instance.status == 'stopped':
                 stopped.append(instance.id)
         return instances.exclude(id__in=stopped)
+
+    @property
+    def cloned(self):
+        return self.data.get('cloned', False)
+
+    @property
+    def git(self):
+        return self.data.get('git', {})
+
+    @property
+    def local_build(self):
+        return self.data.get('local_build', False)
 
     @property
     def stopped_containers(self):
@@ -44,33 +83,36 @@ class Project(SlugableBehaviour, TimestampableBehaviour, UUIDIndexBehaviour, mod
     def render_nginx_conf(self):
         if self.ready_to_publish:
             if self.data.get('ssl', False):
-                template = loader.get_template('projects/nginx/ssl.conf')
+                template = loader.get_template('apps/nginx/ssl.conf')
             else:
-                template = loader.get_template('projects/nginx/base.conf')
+                template = loader.get_template('apps/nginx/base.conf')
             ctx = {
                 "containers": [cont for cont in self.containers.all() if cont.status != 'stopped'],
-                "project_slug": self.slug,
+                "app_slug": self.slug,
                 "domains": self.domain,
-                "base_route": '/home/pi/webs'
+                "base_route": settings.BASE_APPS_DIR
             }
             return template.render(ctx)
 
     def get_or_create_last_image(self):
-        image, created = Image.objects.get_or_create(
-            name=self.data['image'], tag=self.last_version,
-            local_build=self.data.get('local_build', False),
-            last_version=True
-        )
+        name = f'local/{self.slug}' if self.local_build else self.data.get('image', 'noimage')
+        image, created = self.images.get_or_create(
+            name = name,
+            tag = self.data.get('version', 'latest'),
+            last_version=True)
         if created:
-            Image.objects.filter(
-                name=self.data['image'], last_version=True).exclude(
+            self.images.filter(
+                last_version=True).exclude(
                     id=image.id).update(last_version=False)
+            image.name = name
+            image.local_build = self.local_build
+            image.tag = self.data.get('version', 'latest')
         return image
 
     def _create_instance(self, version, instance_number):
-        image = Image.objects.get(
-            name=self.data['image'], tag=version,
-            local_build=self.data.get('local_build', False),
+        image = self.images.get(
+            tag=version,
+            local_build=self.local_build,
             last_version=True)
 
         if not image.built:
@@ -92,24 +134,25 @@ class Project(SlugableBehaviour, TimestampableBehaviour, UUIDIndexBehaviour, mod
         })
         return self.containers.model.objects.create(
             name=name, image=image, instance_number=instance_number,
-            params=params, project=self
+            params=params, app=self
         )
 
-
     def start_instance(self, instance_number):
-
+        from images.models import Image
         if self.containers.filter(name=f"{self.slug}_{instance_number}", active=True).exists():
             # ya existe el contenedor
             container = self.containers.get(
                 name=f"{self.slug}_{instance_number}", active=True)
-            print(f"Ya existe el contenedor {self.slug}_{instance_number}. Arrancando!")
+            print(
+                f"Ya existe el contenedor {self.slug}_{instance_number}. Arrancando!")
             send_slack_message.delay('clients/slack/message.txt', {
                 'message': f'Ya existe el contenedor {self.slug}_{instance_number}. Arrancando!'
             })
             return container.start()
 
         # hay q crearlo
-        instance = self._create_instance(self.get_or_create_last_image().tag, instance_number)
+        instance = self._create_instance(
+            self.get_or_create_last_image().tag, instance_number)
         return instance.start()
 
     def scale(self, num_of_instances):

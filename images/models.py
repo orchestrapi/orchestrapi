@@ -3,6 +3,8 @@ from django.db import models
 from core.behaviours import UUIDIndexBehaviour, TimestampableBehaviour
 from clients.docker import DockerClient as dclient
 
+from apps.models import App
+
 class Image(TimestampableBehaviour, UUIDIndexBehaviour, models.Model):
 
     name = models.CharField(max_length=30)
@@ -12,6 +14,9 @@ class Image(TimestampableBehaviour, UUIDIndexBehaviour, models.Model):
     local_build = models.BooleanField(default=True)
     built = models.BooleanField(default=False)
     last_version = models.BooleanField(default=True)
+
+    app = models.ForeignKey(App, related_name='images',
+                              null=True, blank=True, on_delete=models.CASCADE)
 
     @property
     def image_tag(self):
