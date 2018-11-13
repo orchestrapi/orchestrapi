@@ -16,16 +16,17 @@ class GitClient(ShellClient):
     @staticmethod
     def clone(app):
         """Clone the app repo."""
-        template = ['git', '-C', f'{settings.GIT_PROJECTS_ROUTE}', 'clone', f'{app.git_url}']
+        template = ['git', '-C', f'{settings.GIT_PROJECTS_ROUTE}', 'clone', f'{app.git.get("url")}']
         GitClient.call(template)
 
     @staticmethod
     def checkout_tag(git_name, tag):
         """Checkout to an specific tag and pulls it."""
         GitClient.fetch(git_name)
-        template = ['git', '-C', f'{settings.GIT_PROJECTS_ROUTE}/{git_name}', 'checkout', f'v{tag}']
+        vtag = 'master' if tag == 'latest' else f'v{tag}'
+        template = ['git', '-C', f'{settings.GIT_PROJECTS_ROUTE}/{git_name}', 'checkout', vtag]
         GitClient.call(template)
-        template = ['git', '-C', f'{settings.GIT_PROJECTS_ROUTE}/{git_name}', 'pull', 'origin', f'v{tag}']
+        template = ['git', '-C', f'{settings.GIT_PROJECTS_ROUTE}/{git_name}', 'pull', 'origin', vtag]
         GitClient.call(template)
 
     @staticmethod

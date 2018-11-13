@@ -28,7 +28,7 @@ def git_clone_task(app_id):
 @app.task()
 def git_update_task(app_id):
     app = App.objects.get(id=app_id)
-    gclient.update(app.git_name)
+    gclient.update(app.git.get("name"))
 
 
 @app.task()
@@ -54,7 +54,7 @@ def app_clone_build_update(app_id):
     print(f"Construyendo imagen del proyecto {app.name}")
     image = app.get_or_create_last_image()
     if not image.built:
-        image.build(app.git_name)
+        image.build(app.git.get("name"))
     print(f"Desplagando todas las instancias del proyecto {app.name}")
     app.full_deploy()
     app_update_nginx_conf(app.id)

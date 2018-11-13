@@ -141,6 +141,7 @@ CELERY_BROKER_URL = os.environ.get('RABBIT_URI', 'amqp://guest:guest@localhost:5
 
 NGINX_ROUTE = os.path.join(BASE_DIR, '../conf-dev/nginx')
 GIT_PROJECTS_ROUTE = os.path.join(BASE_DIR, '../conf-dev/git')
+BASE_APPS_DIR = os.environ.get('BASE_APPS_DIR', '/home/pi/webs')
 
 # SLACK
 
@@ -151,3 +152,8 @@ SLACKBOT_SECRET = os.environ.get('SLACKBOT_SECRET', 'your-secret')
 # Login / Logout settings
 
 LOGOUT_REDIRECT_URL = '/'
+
+# ORCHESTRA PI DOMAIN
+
+ORCHESTRAPI_DOMAIN_AND_PORT = os.environ.get('ORCHESTRAPI_DOMAIN_AND_PORT', 'localhost:8000')
+ORCHESTRAPI_HTTP_SCHEMA = os.environ.get('ORCHESTRAPI_HTTP_SCHEMA', 'http')

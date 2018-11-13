@@ -54,7 +54,7 @@ class DockerClient(ShellClient):
         template = [
             'docker', 'build', '-t',
             f'local/{app.slug}',
-            f'{settings.GIT_PROJECTS_ROUTE}/{app.git_name}/.']
+            f'{settings.GIT_PROJECTS_ROUTE}/{app.git.get("name")}/.']
         return DockerClient.call(template)
 
     @staticmethod

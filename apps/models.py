@@ -1,6 +1,7 @@
 from django.contrib.postgres.fields import JSONField
 from django.db import models
 from django.template import loader
+from django.conf import settings
 
 from clients.tasks import send_slack_message
 from core.behaviours import (SlugableBehaviour, TimestampableBehaviour,
@@ -27,12 +28,27 @@ class App(SlugableBehaviour, TimestampableBehaviour, UUIDIndexBehaviour, models.
 
     @property
     def ready_to_publish(self):
-        return self.git_url != None and self.domain != None and self.running_containers.count() > 0
+        return self.git.get("url") != None and self.domain != None and self.running_containers.count() > 0
 
     @property
-    def last_version(self):
+    def last_version_registered(self):
         image = self.images.get(last_version=True)
         return image.tag if image else '-'
+
+    @property
+    def repository_type(self):
+        if '@bitbucket.org' in self.git.get('url'):
+            return 'bitbucket'
+        elif 'https://github.com' in self.git.get('url'):
+            return 'github'
+
+    @property
+    def webhook_url(self):
+        return f'https://orchestra.paquito.ninja/webhooks/{self.repository_type}/{self.id}'
+
+    @property
+    def domain(self):
+        return self.data.get('domain', None)
 
     @property
     def running_containers(self):
@@ -42,6 +58,18 @@ class App(SlugableBehaviour, TimestampableBehaviour, UUIDIndexBehaviour, models.
             if not instance.status or instance.status == 'stopped':
                 stopped.append(instance.id)
         return instances.exclude(id__in=stopped)
+
+    @property
+    def cloned(self):
+        return self.data.get('cloned', False)
+
+    @property
+    def git(self):
+        return self.data.get('git', {})
+
+    @property
+    def local_build(self):
+        return self.data.get('local_build', False)
 
     @property
     def stopped_containers(self):
@@ -62,22 +90,29 @@ class App(SlugableBehaviour, TimestampableBehaviour, UUIDIndexBehaviour, models.
                 "containers": [cont for cont in self.containers.all() if cont.status != 'stopped'],
                 "app_slug": self.slug,
                 "domains": self.domain,
-                "base_route": '/home/pi/webs'
+                "base_route": settings.BASE_APPS_DIR
             }
             return template.render(ctx)
 
     def get_or_create_last_image(self):
-        image, created = self.images.get_or_create(last_version=True)
+        name = f'local/{self.slug}' if self.local_build else self.data.get('image', 'noimage')
+        image, created = self.images.get_or_create(
+            name = name,
+            tag = self.data.get('version', 'latest'),
+            last_version=True)
         if created:
-            self.images.objects.filter(
+            self.images.filter(
                 last_version=True).exclude(
                     id=image.id).update(last_version=False)
+            image.name = name
+            image.local_build = self.local_build
+            image.tag = self.data.get('version', 'latest')
         return image
 
     def _create_instance(self, version, instance_number):
         image = self.images.get(
             tag=version,
-            local_build=self.data.get('local_build', False),
+            local_build=self.local_build,
             last_version=True)
 
         if not image.built:
