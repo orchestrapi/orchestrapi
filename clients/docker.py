@@ -61,6 +61,8 @@ class DockerClient(ShellClient):
     @staticmethod
     def build_from_image_model(image, git_name):
         """Builds a container using an Image instance."""
+        if not image.app.cloned:
+            gclient.clone(image.app)
         gclient.checkout_tag(git_name, image.tag)
         template = [
             'docker', 'build', '-t',
