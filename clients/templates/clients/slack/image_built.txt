@@ -1,2 +1,2 @@
-Se ha completado la construcción del contenedor *{{image.name}}*, version *{{image.tag}}* :tada:
+Se ha completado la construcción de la imagen *{{image.name}}*, versión *{{image.tag}}* :tada:
 La criatura pesa *{{image.size}}*.

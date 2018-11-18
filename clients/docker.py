@@ -8,6 +8,7 @@ from . import ShellClient
 from .git import GitClient as gclient
 from .helpers import Container
 
+from .tasks import send_slack_message
 
 class DockerClient(ShellClient):
 
@@ -62,8 +63,14 @@ class DockerClient(ShellClient):
     def build_from_image_model(image, git_name):
         """Builds a container using an Image instance."""
         if not image.app.cloned:
+            send_slack_message.delay('clients/slack/message.txt', {
+                'message': f'Va clonarse la app **{image.name}:{image.tag}**'
+            })
             gclient.clone(image.app)
         gclient.checkout_tag(git_name, image.tag)
+        send_slack_message.delay('clients/slack/message.txt', {
+            'message': f'Va construirse la imagen **{image.name}:{image.tag}**'
+        })
         template = [
             'docker', 'build', '-t',
             f'{image.image_tag}',
