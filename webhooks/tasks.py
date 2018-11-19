@@ -24,7 +24,7 @@ def process_github_webhook_task(message, app_id):
         },
         'app': {
             'name': app.name,
-            'domain': f'{"https" if app.data.ssl else "http"}://{app.domain}'
+            'domain': f'{"https" if app.data.get('ssl', False) else "http"}://{app.domain}'
         }
     }
     app.data['version'] = new_version['tag']
@@ -57,7 +57,7 @@ def process_bitbucket_webhook_task(message, app_id):
         },
         'app': {
             'name': app.name,
-            'domain': f'{"https" if app.data.ssl else "http"}://{app.domain}'
+            'domain': f'{"https" if app.data.get('ssl', False) else "http"}://{app.domain}'
         }
     }
 
