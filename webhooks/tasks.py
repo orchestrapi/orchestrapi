@@ -9,9 +9,33 @@ from apps.tasks import app_build_last_image, app_update_instances_task
 
 @app.task()
 def process_github_webhook_task(message, app_id):
-    import json
-    send_slack_message.delay('clients/slack/message.txt', {
-        'message': json.dumps(message)})
+    if not 'refs/tags/' in message['ref']:
+        return
+
+    app = App.objects.get(id=app_id)
+
+    new_version = {
+        'tag': message['ref'].replace('refs/tags/', '').replace('v', ''),
+        'message': message['head_commit']['message'],
+        'date': message['head_commit']['timestamp'],
+        'author': {
+            'username': message['head_commit']['commiter']['username'],
+            'full_name': message['head_commit']['commiter']['name']
+        },
+        'app': {
+            'name': app.name,
+            'domain': f'{"https" if app.data.ssl else "http"}://{app.domain}'
+        }
+    }
+    app.data['version'] = new_version['tag']
+    app.save()
+    send_slack_message.delay('clients/slack/new_tag_message.txt', new_version)
+
+    # Create image object and build
+    Image.objects.filter(name=app.data.get('image'),
+                         last_version=True).update(last_version=False)
+    image = app.get_or_create_last_image()
+    app_build_last_image(image.id, app.git.get("name"))
 
 
 @app.task()
@@ -33,7 +57,7 @@ def process_bitbucket_webhook_task(message, app_id):
         },
         'app': {
             'name': app.name,
-            'domain': f'http://{app.domain}'
+            'domain': f'{"https" if app.data.ssl else "http"}://{app.domain}'
         }
     }
 
