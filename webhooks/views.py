@@ -12,7 +12,7 @@ from apps.models import App
 def manage_repository_webhook(request, repository, app_id):
     if request.method != 'POST':
         return JsonResponse({'status': 'error', 'message': 'Method not allowed'}, status=405)
-    app = App.objects.get(id=app_id).exists()
+    app = App.objects.filter(id=app_id).exists()
     if not app:
         return JsonResponse({"status": "Not found", "message": "App not found."}, status=404)
     message = json.loads(request.body)
