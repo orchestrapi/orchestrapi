@@ -67,6 +67,9 @@ class DockerClient(ShellClient):
                 'message': f'Va clonarse la app **{image.name}:{image.tag}**'
             })
             gclient.clone(image.app)
+            image.app.data['cloned'] = True
+            image.app.save()
+
         gclient.checkout_tag(git_name, image.tag)
         send_slack_message.delay('clients/slack/message.txt', {
             'message': f'Va construirse la imagen **{image.name}:{image.tag}**'
