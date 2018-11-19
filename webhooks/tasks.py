@@ -11,7 +11,7 @@ from apps.tasks import app_build_last_image, app_update_instances_task
 def process_github_webhook_task(message, app_id):
     import json
     send_slack_message.delay('clients/slack/message.txt', {
-        'message': json.dums(message)})
+        'message': json.dumps(message)})
 
 
 @app.task()
