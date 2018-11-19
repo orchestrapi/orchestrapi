@@ -44,7 +44,7 @@ class App(SlugableBehaviour, TimestampableBehaviour, UUIDIndexBehaviour, models.
 
     @property
     def webhook_url(self):
-        return f'https://orchestra.paquito.ninja/webhooks/{self.repository_type}/{self.id}'
+        return f'{settings.ORCHESTRAPI_HTTP_SCHEMA}://{settings.ORCHESTRAPI_DOMAIN_AND_PORT}/webhooks/{self.repository_type}/{self.id}'
 
     @property
     def domain(self):
