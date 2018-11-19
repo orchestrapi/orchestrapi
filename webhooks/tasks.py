@@ -19,8 +19,8 @@ def process_github_webhook_task(message, app_id):
         'message': message['head_commit']['message'],
         'date': message['head_commit']['timestamp'],
         'author': {
-            'username': message['head_commit']['commiter']['username'],
-            'full_name': message['head_commit']['commiter']['name']
+            'username': message['head_commit']['committer']['username'],
+            'full_name': message['head_commit']['committer']['name']
         },
         'app': {
             'name': app.name,
