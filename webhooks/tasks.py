@@ -9,7 +9,9 @@ from apps.tasks import app_build_last_image, app_update_instances_task
 
 @app.task()
 def process_github_webhook_task(message, app_id):
-    pass
+    import json
+    send_slack_message.delay('clients/slack/message.txt', {
+        'message': json.dums(message)})
 
 
 @app.task()
@@ -43,14 +45,13 @@ def process_bitbucket_webhook_task(message, app_id):
     Image.objects.filter(name=app.data.get('image'),
                          last_version=True).update(last_version=False)
     image = app.get_or_create_last_image()
-    app_build_last_image.delay(image.id, app.git.get("name"))
+    app_build_last_image(image.id, app.git.get("name"))
 
 
 @app.task()
 def process_webhook_task(repository, message, app_id):
     if repository == 'github':
-        process_github_webhook_task.delay(message, app_id)
+        process_github_webhook_task(message, app_id)
     elif repository == 'bitbucket':
-        process_bitbucket_webhook_task.delay(message, app_id)
-
-    app_update_instances_task.delay(app_id)
+        process_bitbucket_webhook_task(message, app_id)
+    app_update_instances_task(app_id)
