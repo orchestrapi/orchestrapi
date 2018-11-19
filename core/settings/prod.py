@@ -15,3 +15,13 @@ STATIC_ROOT = os.path.join(PROJECT_ROOT, 'static')
 
 NGINX_ROUTE = '/etc/nginx'
 GIT_PROJECTS_ROUTE = os.environ.get('GIT_PROJECTS_ROUTE', '/path/to/git/apps')
+
+# CORS
+
+CORS_ORIGIN_WHITELIST = (
+    os.environ.get('FRONT_APP_DOMAIN', 'example.com')
+)
+
+CSRF_TRUSTED_ORIGINS = (
+    os.environ.get('FRONT_APP_DOMAIN', 'example.com')
+)

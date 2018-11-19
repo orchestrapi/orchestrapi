@@ -12,6 +12,10 @@ django = "*"
 slackclient = "*"
 celery = "*"
 django-prettyjson = "*"
+djangorestframework = "*"
+markdown = "*"
+django-filter = "*"
+django-cors-headers = "*"
 
 [dev-packages]
 "autopep8" = "*"
