@@ -7,7 +7,8 @@ class AppSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = App
-        fields = ['id', 'name', 'data', 'params', 'repository_type', 'create_date', 'slug']
+        fields = ['id', 'name', 'data', 'params',
+                  'repository_type', 'create_date', 'slug']
 
     def get_repository_type(self, obj):
         return obj.repository_type
