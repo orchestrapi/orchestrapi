@@ -1,4 +1,5 @@
 import os
+import datetime
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(
@@ -28,6 +29,7 @@ INSTALLED_APPS = [
 
     'clients',
 
+    'apis.apps.ApisConfig',
     'apps.apps.AppsConfig',
     'containers.apps.ContainersConfig',
     'images.apps.ImagesConfig',
@@ -139,7 +141,8 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # CELERY
 
-CELERY_BROKER_URL = os.environ.get('RABBIT_URI', 'amqp://guest:guest@localhost:5672/')
+CELERY_BROKER_URL = os.environ.get(
+    'RABBIT_URI', 'amqp://guest:guest@localhost:5672/')
 
 # FILE SYSTEM
 
@@ -159,7 +162,8 @@ LOGOUT_REDIRECT_URL = '/'
 
 # ORCHESTRA PI DOMAIN
 
-ORCHESTRAPI_DOMAIN_AND_PORT = os.environ.get('ORCHESTRAPI_DOMAIN_AND_PORT', 'localhost:8000')
+ORCHESTRAPI_DOMAIN_AND_PORT = os.environ.get(
+    'ORCHESTRAPI_DOMAIN_AND_PORT', 'localhost:8000')
 ORCHESTRAPI_HTTP_SCHEMA = os.environ.get('ORCHESTRAPI_HTTP_SCHEMA', 'http')
 
 # CORS
@@ -171,3 +175,24 @@ CORS_ORIGIN_WHITELIST = (
 CSRF_TRUSTED_ORIGINS = (
     'localhost:4200',
 )
+
+# REST FRAMEWORK
+
+REST_FRAMEWORK = {
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.IsAuthenticated',
+    ),
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_jwt.authentication.JSONWebTokenAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+        'rest_framework.authentication.BasicAuthentication',
+    ),
+}
+
+# REST FRAMEWORK JWT
+
+JWT_AUTH = {
+    'JWT_RESPONSE_PAYLOAD_HANDLER': 'apis.handlers.jwt_response_payload_handler',
+    'JWT_EXPIRATION_DELTA': datetime.timedelta(hours=1),
+    'JWT_ALLOW_REFRESH': True,
+}
