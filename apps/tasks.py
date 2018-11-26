@@ -47,15 +47,12 @@ def app_full_deploy_task(app_id):
 def app_clone_build_update(app_id):
     app = App.objects.get(id=app_id)
     if not app.cloned:
-        print(f"Clonando proyecto {app.name}")
         gclient.clone(app)
         app.cloned = True
         app.save()
-    print(f"Construyendo imagen del proyecto {app.name}")
     image = app.get_or_create_last_image()
     if not image.built:
         image.build(app.git.get("name"))
-    print(f"Desplagando todas las instancias del proyecto {app.name}")
     app.full_deploy()
     app_update_nginx_conf(app.id)
 
@@ -77,7 +74,6 @@ def app_update_nginx_conf(app_id):
         })
         # TODO: Mandar un log
         return
-
     filename = generate_conf_name(app.slug)
     conf_file_name = f'{settings.NGINX_ROUTE}/sites-available/{filename}'
     with open(conf_file_name, 'w') as f:

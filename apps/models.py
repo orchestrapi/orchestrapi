@@ -128,7 +128,6 @@ class App(SlugableBehaviour, TimestampableBehaviour, UUIDIndexBehaviour, models.
 
         name = f'{self.slug}_{instance_number}'
 
-        print(f"Creando el contenedor {name}. Guardando!")
         send_slack_message.delay('clients/slack/message.txt', {
             'message': f'Creando el contenedor {name}.'
         })
@@ -140,17 +139,13 @@ class App(SlugableBehaviour, TimestampableBehaviour, UUIDIndexBehaviour, models.
     def start_instance(self, instance_number):
         from images.models import Image
         if self.containers.filter(name=f"{self.slug}_{instance_number}", active=True).exists():
-            # ya existe el contenedor
             container = self.containers.get(
                 name=f"{self.slug}_{instance_number}", active=True)
-            print(
-                f"Ya existe el contenedor {self.slug}_{instance_number}. Arrancando!")
             send_slack_message.delay('clients/slack/message.txt', {
                 'message': f'Ya existe el contenedor {self.slug}_{instance_number}. Arrancando!'
             })
             return container.start()
 
-        # hay q crearlo
         instance = self._create_instance(
             self.get_or_create_last_image().tag, instance_number)
         return instance.start()
@@ -163,13 +158,11 @@ class App(SlugableBehaviour, TimestampableBehaviour, UUIDIndexBehaviour, models.
             start_num_of_instances = instances.first().instance_number + \
                 1 if instances.count() > 0 else 1
             for i in range(start_num_of_instances, num_of_instances + 1):
-                print(f"Va a levantarse la instancia {i}")
                 send_slack_message.delay('clients/slack/message.txt', {
                     'message': f'Va a levantarse la instancia {i}'
                 })
                 self.start_instance(i)
         elif num_of_instances == instances.count():
-            print(f"Ya estan levantadas las {num_of_instances} instancias!")
             send_slack_message.delay('clients/slack/message.txt', {
                 'message': f'Ya estan levantadas las {num_of_instances} instancias!'
             })
@@ -177,7 +170,6 @@ class App(SlugableBehaviour, TimestampableBehaviour, UUIDIndexBehaviour, models.
             to_stop_instances = instances.count() - num_of_instances
             instances_to_stop = instances[:to_stop_instances]
             for instance in instances_to_stop:
-                print(f"Se va a parar {instance.name}")
                 send_slack_message.delay('clients/slack/message.txt', {
                     'message': f'Se va a parar {instance.name}'
                 })
