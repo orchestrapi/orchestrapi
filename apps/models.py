@@ -87,7 +87,7 @@ class App(SlugableBehaviour, TimestampableBehaviour, UUIDIndexBehaviour, models.
             else:
                 template = loader.get_template('apps/nginx/base.conf')
             ctx = {
-                "containers": [cont for cont in self.containers.filter(active=True) if cont.status != 'stopped'],
+                "containers": [cont for cont in self.containers.filter(active=True) if cont.status not in ['stopped', 'exited']],
                 "app_slug": self.slug,
                 "domains": self.domain,
                 "base_route": settings.BASE_APPS_DIR
