@@ -4,6 +4,7 @@ import uuid
 from django.db import models
 from django.utils.text import slugify
 
+
 class TimestampableBehaviour(models.Model):
     """Defines fields for dates creation and update."""
 
@@ -21,6 +22,7 @@ class UUIDIndexBehaviour(models.Model):
 
     class Meta:
         abstract = True
+
 
 class SlugableBehaviour(models.Model):
     """Adds a slug fields to models."""

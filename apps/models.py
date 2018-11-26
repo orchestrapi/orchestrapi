@@ -7,18 +7,20 @@ from clients.tasks import send_slack_message
 from core.behaviours import (SlugableBehaviour, TimestampableBehaviour,
                              UUIDIndexBehaviour)
 
+
 def default_data():
     return {
-    'cloned': False,
-    'local_build': True,
-    'max_instances': 1,
-    'ssl': True,
-    'domain': 'example.com',
-    'git': {
-        'name': '',
-        'url': ''
+        'cloned': False,
+        'local_build': True,
+        'max_instances': 1,
+        'ssl': True,
+        'domain': 'example.com',
+        'git': {
+            'name': '',
+            'url': ''
+        }
     }
-}
+
 
 class App(SlugableBehaviour, TimestampableBehaviour, UUIDIndexBehaviour, models.Model):
 
@@ -95,10 +97,11 @@ class App(SlugableBehaviour, TimestampableBehaviour, UUIDIndexBehaviour, models.
             return template.render(ctx)
 
     def get_or_create_last_image(self):
-        name = f'local/{self.slug}' if self.local_build else self.data.get('image', 'noimage')
+        name = f'local/{self.slug}' if self.local_build else self.data.get(
+            'image', 'noimage')
         image, created = self.images.get_or_create(
-            name = name,
-            tag = self.data.get('version', 'latest'),
+            name=name,
+            tag=self.data.get('version', 'latest'),
             last_version=True)
         if created:
             self.images.filter(

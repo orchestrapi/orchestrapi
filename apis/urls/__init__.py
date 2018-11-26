@@ -9,5 +9,4 @@ urlpatterns = [
     path('auth/basic-auth/', include('rest_framework.urls')),
 
     path('v1/', include('apis.urls.v1')),
-
 ]

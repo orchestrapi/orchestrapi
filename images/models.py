@@ -5,10 +5,12 @@ from clients.docker import DockerClient as dclient
 
 from apps.models import App
 
+
 class Image(TimestampableBehaviour, UUIDIndexBehaviour, models.Model):
 
     name = models.CharField(max_length=30)
-    tag = models.CharField(max_length=30, blank=True, null=True, default='latest')
+    tag = models.CharField(max_length=30, blank=True,
+                           null=True, default='latest')
     image_id = models.CharField(max_length=30, blank=True, null=True)
     size = models.CharField(max_length=30, blank=True, null=True)
     local_build = models.BooleanField(default=True)
@@ -16,7 +18,7 @@ class Image(TimestampableBehaviour, UUIDIndexBehaviour, models.Model):
     last_version = models.BooleanField(default=True)
 
     app = models.ForeignKey(App, related_name='images',
-                              null=True, blank=True, on_delete=models.CASCADE)
+                            null=True, blank=True, on_delete=models.CASCADE)
 
     @property
     def image_tag(self):

@@ -8,6 +8,7 @@ from images.models import Image
 
 dclient = DockerClient()
 
+
 class Container(TimestampableBehaviour, UUIDIndexBehaviour, models.Model):
 
     container_id = models.CharField(max_length=20, null=True, blank=True)

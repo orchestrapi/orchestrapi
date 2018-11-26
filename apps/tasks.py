@@ -116,7 +116,7 @@ def app_update_instances_task(app_id):
             'message': f'Hay una nueva version que actualizar *manualmente* en el proyecto {app.name}.'
         })
         return
-    
+
     send_slack_message.delay('clients/slack/message.txt', {
         'message': f'Comienza la actualización *automatica* de {app.name}.'
     })

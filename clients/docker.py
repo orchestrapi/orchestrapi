@@ -139,7 +139,6 @@ class DockerClient:
         self.remove(container_model)
         self.call(template)
 
-
     def build_from_image_model(self, image, git_name):
         """Builds a container using an Image instance."""
         if not image.app.cloned:
