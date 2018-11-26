@@ -2,10 +2,11 @@ from django.contrib.postgres.fields import JSONField
 from django.db import models
 
 from apps.models import App
-from clients.docker import DockerClient as dclient
+from clients.docker import DockerClient
 from core.behaviours import TimestampableBehaviour, UUIDIndexBehaviour
 from images.models import Image
 
+dclient = DockerClient()
 
 class Container(TimestampableBehaviour, UUIDIndexBehaviour, models.Model):
 
@@ -35,7 +36,7 @@ class Container(TimestampableBehaviour, UUIDIndexBehaviour, models.Model):
             return
         result = dclient.docker_start(self, instance_name=instance_name)
         if not self.container_id:
-            id = dclient.container_id(self.name)
+            id = dclient.container_id(self)
             if id:
                 self.container_id = id
                 self.save()
@@ -47,7 +48,7 @@ class Container(TimestampableBehaviour, UUIDIndexBehaviour, models.Model):
 
     @property
     def ip(self):
-        if self.status and self.status != 'stopped':
+        if self.status and self.status not in ['stopped', 'exited']:
             return self.inspect['NetworkSettings']['IPAddress']
 
     @property

@@ -23,6 +23,6 @@ def update_nginx_conf(modeladmin, request, queryset):
         app_update_nginx_conf.delay(app.id)
 
 
-deploy.short_description = "Desplejar (Temporal)"
+deploy.short_description = "Desplegar (Temporal)"
 update_nginx_conf.short_description = "Actualiza la configuracion de NGINX"
 build_last_image.short_description = "Construir ultima imagen"
