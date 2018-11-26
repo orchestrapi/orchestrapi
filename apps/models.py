@@ -55,7 +55,7 @@ class App(SlugableBehaviour, TimestampableBehaviour, UUIDIndexBehaviour, models.
         instances = self.containers.all()
         stopped = []
         for instance in instances:
-            if not instance.status or instance.status == 'stopped':
+            if not instance.status or instance.status in ['stopped', 'exited']:
                 stopped.append(instance.id)
         return instances.exclude(id__in=stopped)
 
@@ -76,7 +76,7 @@ class App(SlugableBehaviour, TimestampableBehaviour, UUIDIndexBehaviour, models.
         instances = self.containers.all()
         running = []
         for instance in instances:
-            if instance.status and instance.status != 'stopped':
+            if instance.status and instance.status not in ['stopped', 'exited']:
                 running.append(instance.id)
         return instances.exclude(id__in=running)
 
