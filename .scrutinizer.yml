@@ -19,11 +19,11 @@ build:
         coverage:
             tests:
                 override:
-                - command: python manage.py test
-                coverage:
-                    file: .coverage
-                    config_file: .coveragerc
-                    format: python-cc
+                    - command: python manage.py test
+                    coverage:
+                        file: .coverage
+                        config_file: .coveragerc
+                        format: python-cc
 filter:
     excluded_paths:
         - '*/test/*'
