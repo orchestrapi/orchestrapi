@@ -17,9 +17,9 @@ build:
                         command: pylint-run
                         use_website_config: true
         coverage:
-        tests:
-            override:
-            - command: python manage.py test
+            tests:
+                override:
+                - command: python manage.py test
                 coverage:
                     file: .coverage
                     config_file: .coveragerc
