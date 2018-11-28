@@ -21,8 +21,8 @@ build:
             override:
             - command: python manage.py test
                 coverage:
-                    file: '.coverage'
-                    config_file: '.coveragerc'
+                    file: .coverage
+                    config_file: .coveragerc
                     format: python-cc
 filter:
     excluded_paths:
