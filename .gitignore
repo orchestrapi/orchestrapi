@@ -6,3 +6,4 @@ secret.py
 
 .env
 .env-prod
+.coverage
