@@ -26,6 +26,7 @@ INSTALLED_APPS = [
     'prettyjson',
     'rest_framework',
     'corsheaders',
+    'graphene_django',
 
     'clients',
 
