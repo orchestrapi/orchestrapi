@@ -23,7 +23,7 @@ build:
                 coverage:
                     file: '.coverage'
                     config_file: '.coveragerc'
-                    format: 'py-cc'
+                    format: python-cc
 filter:
     excluded_paths:
         - '*/test/*'
