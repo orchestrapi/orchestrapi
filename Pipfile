@@ -19,6 +19,7 @@ django-cors-headers = "==2.4.0"
 djangorestframework-jwt = "==1.11.0"
 docker = "==3.5.1"
 graphene-django = "*"
+django-graphql-jwt = "*"
 
 [dev-packages]
 "autopep8" = "*"
