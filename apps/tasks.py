@@ -3,7 +3,7 @@ import os
 from django.conf import settings
 
 from clients import ShellClient
-from clients.docker import DockerClient as dclient
+from clients.docker import DockerClient
 from clients.git import GitClient as gclient
 from clients.tasks import send_slack_message
 from core.celery import app
@@ -15,6 +15,7 @@ from .models import App
 # sudo letsencrypt certonly --standalone -d loggerlady.paquito.ninja
 # * Tarea para renover el certificado
 
+dclient = DockerClient()
 
 @app.task()
 def git_clone_task(app_id):

@@ -1,9 +1,10 @@
 from django.db import models
 
-from core.behaviours import UUIDIndexBehaviour, TimestampableBehaviour
-from clients.docker import DockerClient as dclient
-
 from apps.models import App
+from clients.docker import DockerClient
+from core.behaviours import TimestampableBehaviour, UUIDIndexBehaviour
+
+dclient = DockerClient()
 
 
 class Image(TimestampableBehaviour, UUIDIndexBehaviour, models.Model):
