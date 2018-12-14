@@ -4,8 +4,9 @@ import json
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 
-from .tasks import process_webhook_task
 from apps.models import App
+
+from .tasks import process_webhook_task
 
 
 @csrf_exempt
@@ -16,6 +17,9 @@ def manage_repository_webhook(request, repository, app_id):
     if not app:
         return JsonResponse({"status": "Not found", "message": "App not found."}, status=404)
     message = json.loads(request.body)
+    if not message:
+        return JsonResponse({
+            "status": "Invalid format", "message": "Invalid json format for webhook."}, status=400)
     if repository == 'bitbucket':
         process_webhook_task.delay('bitbucket', message, app_id)
     elif repository == 'github':

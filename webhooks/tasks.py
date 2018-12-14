@@ -9,7 +9,7 @@ from apps.tasks import app_build_last_image, app_update_instances_task
 
 @app.task()
 def process_github_webhook_task(message, app_id):
-    if not 'refs/tags/' in message['ref']:
+    if not 'refs/tags/' in message.get('ref'):
         return
 
     app = App.objects.get(id=app_id)
@@ -78,4 +78,3 @@ def process_webhook_task(repository, message, app_id):
         process_github_webhook_task(message, app_id)
     elif repository == 'bitbucket':
         process_bitbucket_webhook_task(message, app_id)
-    app_update_instances_task(app_id)

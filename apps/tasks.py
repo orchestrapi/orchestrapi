@@ -17,6 +17,7 @@ from .models import App
 
 dclient = DockerClient()
 
+
 @app.task()
 def git_clone_task(app_id):
     app = App.objects.get(id=app_id)
@@ -105,6 +106,7 @@ def app_build_last_image(image_id, git_name):
             'local_build': image.local_build
         }
     })
+    app_update_instances_task(app_id)
 
 
 @app.task()
