@@ -50,7 +50,7 @@ def app_clone_build_update(app_id):
     app = App.objects.get(id=app_id)
     if not app.cloned:
         gclient.clone(app)
-        app.cloned = True
+        app.data['cloned'] = True
         app.save()
     image = app.get_or_create_last_image()
     if not image.built:
