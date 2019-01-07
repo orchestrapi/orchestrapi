@@ -18,7 +18,7 @@ urlpatterns = [
     path('auth/token-verify/', verify_jwt_token),
     path('auth/basic-auth/', include('rest_framework.urls')),
 
-    path('graphql', csrf_exempt(PrivateGraphQLView.as_view(
+    path('graphql', csrf_exempt(GraphQLView.as_view(
         graphiql=settings.DEBUG
     ))),
 

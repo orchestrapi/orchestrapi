@@ -1,20 +1,17 @@
 """Docker client module."""
 import json
+import subprocess
 from subprocess import CalledProcessError
 
+import docker
 from django.conf import settings
 from django.template.defaultfilters import filesizeformat
+from docker.errors import ImageNotFound, NotFound
 
 from . import ShellClient
 from .git import GitClient as gclient
 from .helpers import Container
-
 from .tasks import send_slack_message
-
-import docker
-import subprocess
-
-from docker.errors import NotFound, ImageNotFound
 
 
 class DockerClient:
@@ -41,6 +38,14 @@ class DockerClient:
         try:
             container = self.client.containers.get(container_instance.name)
             return container.short_id
+        except NotFound:
+            return None
+
+    def service_id(self, service_instance):
+        """Returns containers ID given the name."""
+        try:
+            service = self.client.containers.get(service_instance.slug)
+            return service.short_id
         except NotFound:
             return None
 
@@ -91,7 +96,11 @@ class DockerClient:
         if container_model.container_id:
             self._start(container_model)
         else:
-            self._run(container_model, instance_name=instance_name)
+            from services.models import Service
+            if isinstance(container_model, Service):
+                self._run_service(container_model)
+            else:
+                self._run(container_model, instance_name=instance_name)
 
     def remove(self, container_model):
         """Removes a container."""
@@ -125,8 +134,8 @@ class DockerClient:
                     for par_e, par_e_val in container_model.params['e'].items():
                         template.append(f'-{param}')
                         template.append(f'{par_e}={par_e_val}')
-                elif param == 'v':
-                    for volumen in container_model.params['v']:
+                elif param == 'v' or param == 'p':
+                    for volumen in container_model.params[param]:
                         template.append(f'-{param}')
                         template.append(volumen)
                 else:
@@ -137,6 +146,29 @@ class DockerClient:
         template.append('-d')
         template.append(container_model.image.image_tag)
         self.remove(container_model)
+        self.call(template)
+
+    def _run_service(self, service_instance):
+        """Runs a service container using 'run' command."""
+        template = ["docker", "run"]
+        if service_instance.params != {}:
+            for param in service_instance.params.keys():
+                if param == 'e':
+                    for par_e, par_e_val in service_instance.params['e'].items():
+                        template.append(f'-{param}')
+                        template.append(f'{par_e}={par_e_val}')
+                elif param == 'v' or param == 'p':
+                    for volumen in service_instance.params[param]:
+                        template.append(f'-{param}')
+                        template.append(volumen)
+                else:
+                    template.append(f'-{param}')
+                    template.append(service_instance.params[param])
+        template.append('--name')
+        template.append(service_instance.slug)
+        template.append('-d')
+        template.append(service_instance.service_with_tag)
+        self.remove(service_instance)
         self.call(template)
 
     def build_from_image_model(self, image, git_name):
