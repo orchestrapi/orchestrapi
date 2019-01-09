@@ -35,6 +35,8 @@ INSTALLED_APPS = [
     'containers.apps.ContainersConfig',
     'images.apps.ImagesConfig',
     'services.apps.ServicesConfig',
+    'networks.apps.NetworksConfig',
+    'projects.apps.ProjectsConfig',
 
     'webhooks.apps.WebhooksConfig'
 
