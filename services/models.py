@@ -5,6 +5,8 @@ from clients.docker import DockerClient
 from core.behaviours import (SlugableBehaviour, TimestampableBehaviour,
                              UUIDIndexBehaviour)
 
+from containers.models import ContainerBase
+
 dclient = DockerClient()
 
 
@@ -18,12 +20,9 @@ def default_data():
     }
 
 
-class Service(SlugableBehaviour, TimestampableBehaviour, UUIDIndexBehaviour, models.Model):
+class Service(SlugableBehaviour, ContainerBase):
 
-    name = models.CharField(max_length=255, verbose_name="Name")
-    container_id = models.CharField(max_length=20, null=True, blank=True)
     data = JSONField(default=default_data, blank=True)
-    params = JSONField(default=dict, blank=True)
 
     @property
     def docker(self):

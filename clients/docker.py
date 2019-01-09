@@ -10,7 +10,6 @@ from docker.errors import ImageNotFound, NotFound
 
 from . import ShellClient
 from .git import GitClient as gclient
-from .helpers import Container
 from .tasks import send_slack_message
 
 

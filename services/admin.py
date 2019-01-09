@@ -8,7 +8,7 @@ from .models import Service
 
 
 class ServiceAdmin(admin.ModelAdmin):
-    list_display = ['name','service_with_tag', 'status']
+    list_display = ['name','service_with_tag', 'ip', 'status']
     actions = [start_service,stop_service]
 
     formfield_overrides = {

@@ -9,11 +9,27 @@ from images.models import Image
 dclient = DockerClient()
 
 
-class Container(TimestampableBehaviour, UUIDIndexBehaviour, models.Model):
+class ContainerBase(TimestampableBehaviour, UUIDIndexBehaviour, models.Model):
 
     container_id = models.CharField(max_length=20, null=True, blank=True)
     name = models.CharField(max_length=30)
     params = JSONField(default=dict, blank=True)
+
+    @property
+    def inspect(self):
+        if self.status:
+            return dclient.inspect(self)
+
+    @property
+    def ip(self):
+        if self.status and self.status not in ['stopped', 'exited']:
+            return self.inspect['NetworkSettings']['IPAddress']
+
+    class Meta:
+        abstract = True
+
+
+class Container(ContainerBase):
     instance_number = models.SmallIntegerField()
 
     app = models.ForeignKey(
@@ -41,16 +57,6 @@ class Container(TimestampableBehaviour, UUIDIndexBehaviour, models.Model):
             if id:
                 self.container_id = id
                 self.save()
-
-    @property
-    def inspect(self):
-        if self.status:
-            return dclient.inspect(self)
-
-    @property
-    def ip(self):
-        if self.status and self.status not in ['stopped', 'exited']:
-            return self.inspect['NetworkSettings']['IPAddress']
 
     @property
     def port(self):
