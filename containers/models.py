@@ -1,10 +1,12 @@
 from django.contrib.postgres.fields import JSONField
 from django.db import models
+from django.db.models.signals import m2m_changed
 
 from apps.models import App
 from clients.docker import DockerClient
 from core.behaviours import TimestampableBehaviour, UUIDIndexBehaviour
 from images.models import Image
+from networks.models import NetworkBridge
 
 dclient = DockerClient()
 
@@ -39,6 +41,7 @@ class Container(ContainerBase):
     image = models.ForeignKey(
         Image, blank=True, null=True,
         related_name='containers', on_delete=models.CASCADE)
+    networks = models.ManyToManyField(NetworkBridge, related_name="containers", blank=True)
 
     active = models.BooleanField(default=True)
 
@@ -73,3 +76,26 @@ class Container(ContainerBase):
 
     def stop(self):
         dclient._stop(self)
+
+
+# SIGNALS
+
+def connect_or_disconnect_container_to_network(sender, instance, action, model, pk_set, **kwargs):
+    if action in ['post_add', 'post_remove']:
+        docker_container = dclient.get_container_by_name(instance.name if isinstance(instance, Container) else instance.slug)
+        networks_id = [str(pk) for pk in pk_set]
+        networks_instances = model.objects.filter(id__in=networks_id)
+        docker_networks = [dclient.get_network_by_id(net.network_id) for net in networks_instances]
+        if action == 'post_add':
+            for network in docker_networks:
+                print(f"Metiendo el contenedor {instance.name} en la red {network.name}")
+                dclient.connect_container_to_network(network, docker_container)
+                print(f"Contenedores presentes {dclient.get_containers_on_network(network)}")
+        elif action == 'post_remove':
+            for network in docker_networks:
+                print(f"Metiendo el contenedor {instance.name} en la red {network.name}")
+                dclient.disconnect_container_to_network(network, docker_container)
+                print(f"Contenedores presentes {dclient.get_containers_on_network(network)}")
+            
+
+m2m_changed.connect(connect_or_disconnect_container_to_network, sender=Container.networks.through)

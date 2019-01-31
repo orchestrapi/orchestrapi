@@ -5,7 +5,9 @@ from clients.docker import DockerClient
 from core.behaviours import (SlugableBehaviour, TimestampableBehaviour,
                              UUIDIndexBehaviour)
 
-from containers.models import ContainerBase
+from containers.models import ContainerBase, connect_or_disconnect_container_to_network
+from networks.models import NetworkBridge
+from django.db.models.signals import m2m_changed
 
 dclient = DockerClient()
 
@@ -23,6 +25,7 @@ def default_data():
 class Service(SlugableBehaviour, ContainerBase):
 
     data = JSONField(default=default_data, blank=True)
+    networks = models.ManyToManyField(NetworkBridge, related_name="services", blank=True)
 
     @property
     def docker(self):
@@ -49,3 +52,7 @@ class Service(SlugableBehaviour, ContainerBase):
 
     def stop(self):
         dclient._stop(self)
+
+# SIGNALS
+
+m2m_changed.connect(connect_or_disconnect_container_to_network, sender=Service.networks.through)

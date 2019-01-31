@@ -223,7 +223,7 @@ class DockerClient:
 
     def list_networks(self):
         try:
-            return self.client.networks.list(driver="bridge")
+            return self.client.networks.list()
         except docker.errors.APIError:
             print("Error al listar redes")
 
@@ -232,3 +232,15 @@ class DockerClient:
             return self.client.networks.prune(filters=filters)
         except docker.errors.APIError:
             print("Error borrando redes sin uso")
+
+    def get_containers_on_network(self, network):
+        network.reload()
+        return network.containers
+
+    def get_container_by_name(self, name):
+        try:
+            return self.client.containers.get(name)
+        except docker.errors.NotFound:
+            return None
+        except docker.errors.APIError:
+            print("Error obteniendo contenedor")
