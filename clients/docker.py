@@ -209,7 +209,7 @@ class DockerClient:
 
     def connect_container_to_network(self, network, container):
         try:
-            network.connect(container)
+            network.connect(container, aliases=[container.name])
         except docker.errors.APIError:
             print(
                 f"Error conectando contenedor {container} a la red {network.name}")
