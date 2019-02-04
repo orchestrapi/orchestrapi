@@ -45,7 +45,7 @@ class Service(SlugableBehaviour, ContainerBase):
     def run(self):
         dclient.docker_start(self)
         if not self.container_id:
-            id = dclient.service_id(self)
+            id = dclient.container_id(self)
             if id:
                 self.container_id = id
                 self.save()

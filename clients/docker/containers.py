@@ -1,28 +1,8 @@
-"""Docker client module."""
-import json
-import subprocess
-from subprocess import CalledProcessError
-
-import docker
-from django.conf import settings
 from django.template.defaultfilters import filesizeformat
-from docker.errors import ImageNotFound, NotFound
-
-from . import ShellClient
-from .git import GitClient as gclient
-from .tasks import send_slack_message
+from docker.errors import ImageNotFound
 
 
-class DockerClient:
-
-    """Special client for docker commands."""
-
-    def __init__(self):
-        self.client = docker.from_env()
-
-    def call(self, command):
-        """Call method to execute shell commands."""
-        return subprocess.check_output(command).decode()
+class DockerContainerMixin:
 
     def ps(self):
         return self.client.containers.list()
@@ -34,17 +14,14 @@ class DockerClient:
 
     def container_id(self, container_instance):
         """Returns containers ID given the name."""
+        from containers.models import Container
+        if isinstance(container_instance, Container):
+            field = container_instance.name
+        else:
+            field = container_instance.slug
         try:
-            container = self.client.containers.get(container_instance.name)
+            container = self.client.containers.get(field)
             return container.short_id
-        except NotFound:
-            return None
-
-    def service_id(self, service_instance):
-        """Returns containers ID given the name."""
-        try:
-            service = self.client.containers.get(service_instance.slug)
-            return service.short_id
         except NotFound:
             return None
 
@@ -169,69 +146,6 @@ class DockerClient:
         template.append(service_instance.service_with_tag)
         self.remove(service_instance)
         self.call(template)
-
-    def build_from_image_model(self, image, git_name):
-        """Builds a container using an Image instance."""
-        if not image.app.cloned:
-            send_slack_message.delay('clients/slack/message.txt', {
-                'message': f'Va clonarse la app *{image.name}:{image.tag}*'
-            })
-            gclient.clone(image.app)
-            image.app.data['cloned'] = True
-            image.app.save()
-
-        gclient.checkout_tag(git_name, image.tag)
-        send_slack_message.delay('clients/slack/message.txt', {
-            'message': f'Va construirse la imagen *{image.name}:{image.tag}*'
-        })
-        template = [
-            'docker', 'build', '-t',
-            f'{image.image_tag}',
-            f'{settings.GIT_PROJECTS_ROUTE}/{git_name}/.']
-        return self.call(template)
-
-    def create_network(self, name):
-        return self.client.networks.create(name, driver="bridge")
-
-    def remove_network(self, network):
-        try:
-            network.remove()
-        except docker.errors.APIError:
-            print(f"Error al eliminar la red {network.id}")
-
-    def get_network_by_id(self, network_id, verbose=False):
-        try:
-            return self.client.networks.get(network_id, verbose=verbose)
-        except docker.errors.NotFound:
-            return None
-        except docker.errors.APIError:
-            print(f"Error obteniendo red {network_id}")
-
-    def connect_container_to_network(self, network, container):
-        try:
-            network.connect(container, aliases=[container.name])
-        except docker.errors.APIError:
-            print(
-                f"Error conectando contenedor {container} a la red {network.name}")
-
-    def disconnect_container_to_network(self, network, container, force=False):
-        try:
-            network.disconnect(container, force=force)
-        except docker.errors.APIError:
-            print(
-                f"Error desconectando contenedor {container} a la red {network.name}")
-
-    def list_networks(self):
-        try:
-            return self.client.networks.list()
-        except docker.errors.APIError:
-            print("Error al listar redes")
-
-    def networks_prune(self, filters=None):
-        try:
-            return self.client.networks.prune(filters=filters)
-        except docker.errors.APIError:
-            print("Error borrando redes sin uso")
 
     def get_containers_on_network(self, network):
         network.reload()
