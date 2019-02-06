@@ -61,6 +61,9 @@ class Container(ContainerBase):
                 self.container_id = id
                 self.save()
 
+        if not self.networks.exists() and self.app.project.network:
+            self.networks.add(self.app.project.network)
+
     @property
     def port(self):
         return self.app.data.get('port', 8080)
@@ -82,7 +85,7 @@ class Container(ContainerBase):
 
 def connect_or_disconnect_container_to_network(sender, instance, action, model, pk_set, **kwargs):
     if action in ['post_add', 'post_remove']:
-        docker_container = dclient.get_container_by_name(instance.name if isinstance(instance, Container) else instance.slug)
+        docker_container = dclient.get_container_by_name(instance.container_id)
         networks_id = [str(pk) for pk in pk_set]
         networks_instances = model.objects.filter(id__in=networks_id)
         docker_networks = [dclient.get_network_by_id(net.network_id) for net in networks_instances]

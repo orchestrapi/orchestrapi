@@ -1,5 +1,5 @@
 from django.template.defaultfilters import filesizeformat
-from docker.errors import ImageNotFound
+from docker.errors import ImageNotFound, APIError, NotFound
 
 
 class DockerContainerMixin:
@@ -85,9 +85,9 @@ class DockerContainerMixin:
             container = self.client.containers.get(
                 container_model.name)
             container.remove()
-        except docker.errors.NotFound:
+        except NotFound:
             print(f'Container {container_model.name} does not exists.')
-        except docker.errors.APIError:
+        except APIError:
             print(f'Error removing container {container_model.name}.')
 
     def remove_image(self, image_model):
@@ -98,7 +98,7 @@ class DockerContainerMixin:
             image.remove()
         except CalledProcessError:
             print(f'Image {image_model.image_tag} does not exists.')
-        except docker.errors.APIError:
+        except APIError:
             print(f'Error removing container {container_model.name}.')
 
     def _run(self, container_model, instance_name=None):
@@ -154,7 +154,7 @@ class DockerContainerMixin:
     def get_container_by_name(self, name):
         try:
             return self.client.containers.get(name)
-        except docker.errors.NotFound:
+        except NotFound:
             return None
-        except docker.errors.APIError:
+        except APIError:
             print("Error obteniendo contenedor")

@@ -7,6 +7,7 @@ from clients.tasks import send_slack_message
 from core.behaviours import (SlugableBehaviour, TimestampableBehaviour,
                              UUIDIndexBehaviour)
 
+from projects.models import Project
 
 def default_data():
     return {
@@ -27,6 +28,7 @@ class App(SlugableBehaviour, TimestampableBehaviour, UUIDIndexBehaviour, models.
     name = models.CharField(max_length=255, verbose_name="Name")
     data = JSONField(default=default_data, blank=True)
     params = JSONField(default=dict, blank=True)
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='apps', blank=True, null=True)
 
     @property
     def ready_to_publish(self):

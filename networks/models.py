@@ -40,6 +40,12 @@ class NetworkBridge(NetworkBase):
         self.network_id = network.id
         self.save()
 
+    def get_containers_list(self):
+        network = self.dclient.get_network_by_id(self.slug)
+        if network:
+            return self.dclient.get_containers_on_network(network)
+        return []
+
 
 # SIGNALS
 
