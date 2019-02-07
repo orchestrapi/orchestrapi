@@ -129,6 +129,9 @@ def app_update_instances_task(app_id):
         for old_cont in old_containers:
             old_cont.stop()
             old_cont.active = False
+            if old_cont.networks.exists():
+                for network in old_cont.networks.all():
+                    old_cont.networks.remove(network)
             old_cont.save()
             dclient.remove(old_cont)
             app.start_instance(old_cont.instance_number)

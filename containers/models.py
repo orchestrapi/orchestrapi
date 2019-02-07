@@ -96,7 +96,7 @@ def connect_or_disconnect_container_to_network(sender, instance, action, model, 
                 print(f"Contenedores presentes {dclient.get_containers_on_network(network)}")
         elif action == 'post_remove':
             for network in docker_networks:
-                print(f"Metiendo el contenedor {instance.name} en la red {network.name}")
+                print(f"Sacando el contenedor {instance.name} de la red {network.name}")
                 dclient.disconnect_container_to_network(network, docker_container)
                 print(f"Contenedores presentes {dclient.get_containers_on_network(network)}")
             

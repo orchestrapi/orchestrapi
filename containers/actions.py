@@ -1,3 +1,5 @@
+from .tasks import restart_containers_task
+
 
 def start_containers(modeladmin, request, queryset):
     for container in queryset:
@@ -11,5 +13,11 @@ def stop_containers(modeladmin, request, queryset):
             container.stop()
 
 
-start_containers.short_description = "Arranca contenedores que estén parados."
-stop_containers.short_description = "Detiene contenedores en ejecución."
+def restart_containers(modeladmin, request, queryset):
+    restart_containers_task.delay(
+        [container.container_id for container in queryset])
+
+
+start_containers.short_description = "Arranca contenedores que estén parados"
+stop_containers.short_description = "Detiene contenedores en ejecución"
+restart_containers.short_description = "Reiniciar los contenedores seleccionados"

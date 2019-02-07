@@ -2,12 +2,12 @@ from django.contrib import admin
 
 from .models import Container
 
-from .actions import start_containers, stop_containers
+from .actions import start_containers, stop_containers, restart_containers
 
 
 class ContainerAdmin(admin.ModelAdmin):
     list_display = ['container_id', 'name', '_image','_networks', 'ip', 'status', 'active']
-    actions = [start_containers, stop_containers]
+    actions = [start_containers, stop_containers, restart_containers]
     list_filter = ['active', 'app']
 
     def _image(self, obj):
