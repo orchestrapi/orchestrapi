@@ -3,11 +3,12 @@ from django.db import models
 from apps.models import App
 from clients.docker import DockerClient
 from core.behaviours import TimestampableBehaviour, UUIDIndexBehaviour
+from core.mixins import SerializeMixin
 
 dclient = DockerClient()
 
 
-class Image(TimestampableBehaviour, UUIDIndexBehaviour, models.Model):
+class Image(TimestampableBehaviour, UUIDIndexBehaviour, SerializeMixin, models.Model):
 
     name = models.CharField(max_length=30)
     tag = models.CharField(max_length=30, blank=True,

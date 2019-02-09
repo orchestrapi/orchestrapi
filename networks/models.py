@@ -1,11 +1,13 @@
 from django.db import models
-
-from core.behaviours import SlugableBehaviour, TimestampableBehaviour, UUIDIndexBehaviour
-from clients.docker import DockerClient
-
 from django.db.models.signals import post_delete
 
-class NetworkBase(UUIDIndexBehaviour, SlugableBehaviour, TimestampableBehaviour, models.Model):
+from clients.docker import DockerClient
+from core.behaviours import (SlugableBehaviour, TimestampableBehaviour,
+                             UUIDIndexBehaviour)
+from core.mixins import SerializeMixin
+
+
+class NetworkBase(UUIDIndexBehaviour, SlugableBehaviour, TimestampableBehaviour, SerializeMixin, models.Model):
 
     name = models.CharField(max_length=30)
     network_id = models.CharField(max_length=100, blank=True, null=True)
@@ -52,5 +54,6 @@ class NetworkBridge(NetworkBase):
 def delete_docker_network(sender, **kwargs):
     instance = kwargs.get('instance')
     instance.remove_docker_network()
+
 
 post_delete.connect(delete_docker_network, sender=NetworkBridge)

@@ -1,13 +1,14 @@
 from django.contrib.postgres.fields import JSONField
 from django.db import models
+from django.db.models.signals import m2m_changed
 
 from clients.docker import DockerClient
+from containers.models import (ContainerBase,
+                               connect_or_disconnect_container_to_network)
 from core.behaviours import (SlugableBehaviour, TimestampableBehaviour,
                              UUIDIndexBehaviour)
-
-from containers.models import ContainerBase, connect_or_disconnect_container_to_network
+from core.mixins import SerializeMixin
 from networks.models import NetworkBridge
-from django.db.models.signals import m2m_changed
 
 dclient = DockerClient()
 
@@ -22,10 +23,11 @@ def default_data():
     }
 
 
-class Service(SlugableBehaviour, ContainerBase):
+class Service(SlugableBehaviour, SerializeMixin, ContainerBase):
 
     data = JSONField(default=default_data, blank=True)
-    networks = models.ManyToManyField(NetworkBridge, related_name="services", blank=True)
+    networks = models.ManyToManyField(
+        NetworkBridge, related_name="services", blank=True)
 
     @property
     def docker(self):
@@ -55,4 +57,6 @@ class Service(SlugableBehaviour, ContainerBase):
 
 # SIGNALS
 
-m2m_changed.connect(connect_or_disconnect_container_to_network, sender=Service.networks.through)
+
+m2m_changed.connect(connect_or_disconnect_container_to_network,
+                    sender=Service.networks.through)

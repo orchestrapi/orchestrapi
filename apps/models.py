@@ -8,6 +8,7 @@ from core.behaviours import (SlugableBehaviour, TimestampableBehaviour,
                              UUIDIndexBehaviour)
 
 from projects.models import Project
+from core.mixins import SerializeMixin
 
 def default_data():
     return {
@@ -23,7 +24,7 @@ def default_data():
     }
 
 
-class App(SlugableBehaviour, TimestampableBehaviour, UUIDIndexBehaviour, models.Model):
+class App(SlugableBehaviour, TimestampableBehaviour, UUIDIndexBehaviour, SerializeMixin, models.Model):
 
     name = models.CharField(max_length=255, verbose_name="Name")
     data = JSONField(default=default_data, blank=True)

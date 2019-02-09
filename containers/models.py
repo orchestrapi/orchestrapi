@@ -7,6 +7,7 @@ from clients.docker import DockerClient
 from core.behaviours import TimestampableBehaviour, UUIDIndexBehaviour
 from images.models import Image
 from networks.models import NetworkBridge
+from core.mixins import SerializeMixin
 
 dclient = DockerClient()
 
