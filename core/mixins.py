@@ -10,10 +10,6 @@ class SerializeMixin:
         data = self.__dict__
         if data.get("_state"):
             data.pop("_state")
-        return SerializeMixin.to_serialize(data)
-
-    @staticmethod
-    def to_serialize(data):
         return SerializeMixin._serialize(data)
 
     @staticmethod

@@ -10,6 +10,7 @@ from core.behaviours import (SlugableBehaviour, TimestampableBehaviour,
 from projects.models import Project
 from core.mixins import SerializeMixin
 
+
 def default_data():
     return {
         'cloned': False,
@@ -30,6 +31,8 @@ class App(SlugableBehaviour, TimestampableBehaviour, UUIDIndexBehaviour, Seriali
     data = JSONField(default=default_data, blank=True)
     params = JSONField(default=dict, blank=True)
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='apps', blank=True, null=True)
+
+    load_balancer = models.ForeignKey('services.Service', on_delete=models.CASCADE, related_name="apps", null=True, blank=True)
 
     @property
     def ready_to_publish(self):

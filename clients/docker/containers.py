@@ -1,6 +1,7 @@
 from django.template.defaultfilters import filesizeformat
 from docker.errors import ImageNotFound, APIError, NotFound
 
+from ..utils import clean_volume
 
 class DockerContainerMixin:
 
@@ -113,7 +114,7 @@ class DockerContainerMixin:
                 elif param == 'v' or param == 'p':
                     for volumen in container_model.params[param]:
                         template.append(f'-{param}')
-                        template.append(volumen)
+                        template.append(clean_volume(volumen, container_model.app))
                 else:
                     template.append(f'-{param}')
                     template.append(container_model.params[param])

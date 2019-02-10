@@ -32,7 +32,7 @@ class ContainerBase(TimestampableBehaviour, UUIDIndexBehaviour, models.Model):
         abstract = True
 
 
-class Container(ContainerBase):
+class Container(SerializeMixin, ContainerBase):
     instance_number = models.SmallIntegerField()
 
     app = models.ForeignKey(
