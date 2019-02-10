@@ -137,7 +137,7 @@ class DockerContainerMixin:
                 elif param == 'v' or param == 'p':
                     for volumen in service_instance.params[param]:
                         template.append(f'-{param}')
-                        template.append(volumen)
+                        template.append(clean_volume(volumen. service_instance))
                 else:
                     template.append(f'-{param}')
                     template.append(service_instance.params[param])
