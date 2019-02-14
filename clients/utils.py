@@ -2,9 +2,10 @@ from files.models import ConfigFile
 import re
 
 def get_match_and_slug(text, pattern):
-    match = re.search(pattern, volumen)
+    match = re.search(pattern, text)
     if match:
-        return match.group(0), match[2:-1]
+        found = match.group()
+        return found, found[2:-1]
     return None, None
 
 def clean_volume(volumen, instance):

@@ -21,7 +21,6 @@ class DockerNetworksMixin:
             print(f"Error obteniendo red {network_id}")
 
     def connect_container_to_network(self, network, container):
-        # import ipdb; ipdb.set_trace()
         try:
             network.connect(container)
         except Exception:

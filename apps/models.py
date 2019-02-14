@@ -51,6 +51,14 @@ class App(SlugableBehaviour, TimestampableBehaviour, UUIDIndexBehaviour, Seriali
             return 'github'
 
     @property
+    def running_containers_ips(self):
+        return [cont.ip for cont in self.containers.filter(active=True) if cont.status not in ['stopped', 'exited']]
+
+    @property
+    def running_containers_ips_and_port(self):
+        return [f"{cont.ip}:{cont.port}" for cont in self.containers.filter(active=True) if cont.status not in ['stopped', 'exited']]
+
+    @property
     def webhook_url(self):
         return f'{settings.ORCHESTRAPI_HTTP_SCHEMA}://{settings.ORCHESTRAPI_DOMAIN_AND_PORT}/webhooks/{self.repository_type}/{self.id}'
 
@@ -60,7 +68,7 @@ class App(SlugableBehaviour, TimestampableBehaviour, UUIDIndexBehaviour, Seriali
 
     @property
     def running_containers(self):
-        instances = self.containers.all()
+        instances = self.containers.filter(active=True)
         stopped = []
         for instance in instances:
             if not instance.status or instance.status in ['stopped', 'exited']:
@@ -94,8 +102,12 @@ class App(SlugableBehaviour, TimestampableBehaviour, UUIDIndexBehaviour, Seriali
                 template = loader.get_template('apps/nginx/ssl.conf')
             else:
                 template = loader.get_template('apps/nginx/base.conf')
+            if not self.load_balancer:
+                containers = [cont for cont in self.containers.filter(active=True) if cont.status not in ['stopped', 'exited']]
+            else:
+                containers = [self.load_balancer]
             ctx = {
-                "containers": [cont for cont in self.containers.filter(active=True) if cont.status not in ['stopped', 'exited']],
+                "containers": containers,
                 "app_slug": self.slug,
                 "domains": self.domain,
                 "base_route": settings.BASE_APPS_DIR
@@ -155,8 +167,8 @@ class App(SlugableBehaviour, TimestampableBehaviour, UUIDIndexBehaviour, Seriali
             })
             return container.start()
 
-        instance = self._create_instance(
-            self.get_or_create_last_image().tag, instance_number)
+        instance = self._create_instance(self.get_or_create_last_image().tag, instance_number)
+
         return instance.start()
 
     def scale(self, num_of_instances):
@@ -185,7 +197,9 @@ class App(SlugableBehaviour, TimestampableBehaviour, UUIDIndexBehaviour, Seriali
                 instance.stop()
 
     def full_deploy(self):
-        return self.scale(self.data.get('max_instances', 1))
+        self.scale(self.data.get('max_instances', 1))
+        if self.load_balancer:
+            self.load_balancer.update_conf(self)
 
     def full_stop(self):
         instances = self.running_containers

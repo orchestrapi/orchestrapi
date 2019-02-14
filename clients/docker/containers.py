@@ -137,7 +137,7 @@ class DockerContainerMixin:
                 elif param == 'v' or param == 'p':
                     for volumen in service_instance.params[param]:
                         template.append(f'-{param}')
-                        template.append(clean_volume(volumen. service_instance))
+                        template.append(clean_volume(volumen, service_instance))
                 else:
                     template.append(f'-{param}')
                     template.append(service_instance.params[param])
@@ -145,7 +145,8 @@ class DockerContainerMixin:
         template.append(service_instance.slug)
         template.append('-d')
         template.append(service_instance.service_with_tag)
-        self.remove(service_instance)
+        if service_instance.container_id:
+            self.remove(service_instance)
         self.call(template)
 
     def get_containers_on_network(self, network):

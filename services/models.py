@@ -1,8 +1,8 @@
 from django.contrib.postgres.fields import JSONField
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.db.models.signals import m2m_changed
 
-from clients.docker import DockerClient
 from containers.models import (ContainerBase,
                                connect_or_disconnect_container_to_network)
 from core.behaviours import (SlugableBehaviour, TimestampableBehaviour,
@@ -10,7 +10,7 @@ from core.behaviours import (SlugableBehaviour, TimestampableBehaviour,
 from core.mixins import SerializeMixin
 from networks.models import NetworkBridge
 
-dclient = DockerClient()
+from .mixins import LoadBalancerMixin
 
 
 def default_data():
@@ -20,10 +20,10 @@ def default_data():
             'name': '',
             'tag': ''
         }
-    }
+    }        
 
 
-class Service(SlugableBehaviour, SerializeMixin, ContainerBase):
+class Service(SlugableBehaviour, SerializeMixin, LoadBalancerMixin, ContainerBase):
 
     data = JSONField(default=default_data, blank=True)
     networks = models.ManyToManyField(
@@ -34,9 +34,22 @@ class Service(SlugableBehaviour, SerializeMixin, ContainerBase):
         return self.data.get('docker', {})
 
     @property
+    def main_config_file(self):
+        slug = self.data.get('main_config_file')
+        if not slug:
+            return None
+        try:
+            f = self.config_files.get(slug=slug)
+        except ObjectDoesNotExist:
+            f = None
+        finally:
+            return f
+         
+
+    @property
     def status(self):
         if self.container_id:
-            status = dclient.container_status(self.container_id)
+            status = self.dclient.container_status(self.container_id)
             return status if status else 'stopped'
         return None
 
@@ -45,15 +58,15 @@ class Service(SlugableBehaviour, SerializeMixin, ContainerBase):
         return f"{self.docker.get('name')}:{self.docker.get('tag')}"
 
     def run(self):
-        dclient.docker_start(self)
+        self.dclient.docker_start(self)
         if not self.container_id:
-            id = dclient.container_id(self)
+            id = self.dclient.container_id(self)
             if id:
                 self.container_id = id
                 self.save()
 
     def stop(self):
-        dclient._stop(self)
+        self.dclient._stop(self)
 
 # SIGNALS
 

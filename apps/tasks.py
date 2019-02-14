@@ -135,6 +135,8 @@ def app_update_instances_task(app_id):
             old_cont.save()
             dclient.remove(old_cont)
             app.start_instance(old_cont.instance_number)
+        if app.load_balancer:
+            app.load_balancer.update_conf(app)
     else:
         app.full_deploy()
 

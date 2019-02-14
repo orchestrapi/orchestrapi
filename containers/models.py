@@ -9,8 +9,6 @@ from images.models import Image
 from networks.models import NetworkBridge
 from core.mixins import SerializeMixin
 
-dclient = DockerClient()
-
 
 class ContainerBase(TimestampableBehaviour, UUIDIndexBehaviour, models.Model):
 
@@ -18,15 +16,26 @@ class ContainerBase(TimestampableBehaviour, UUIDIndexBehaviour, models.Model):
     name = models.CharField(max_length=30)
     params = JSONField(default=dict, blank=True)
 
+    def __init__(self, *args, **kwargs):
+        self.dclient = DockerClient()
+        super(ContainerBase, self).__init__(*args, **kwargs)
+
     @property
     def inspect(self):
         if self.status:
-            return dclient.inspect(self)
+            return self.dclient.inspect(self)
 
     @property
     def ip(self):
         if self.status and self.status not in ['stopped', 'exited']:
             return self.inspect['NetworkSettings']['IPAddress']
+
+    @property
+    def port(self):
+        return self.data.get('port', 8080)
+
+    def is_running(self):
+        return self.status and self.status not in ['stopped', 'exited']
 
     class Meta:
         abstract = True
@@ -49,15 +58,15 @@ class Container(SerializeMixin, ContainerBase):
     @property
     def status(self):
         if self.container_id and self.active:
-            status = dclient.container_status(self.container_id)
+            status = self.dclient.container_status(self.container_id)
             return status if status else 'stopped'
 
     def start(self, instance_name=None):
         if not self.active:
             return
-        result = dclient.docker_start(self, instance_name=instance_name)
+        result = self.dclient.docker_start(self, instance_name=instance_name)
         if not self.container_id:
-            id = dclient.container_id(self)
+            id = self.dclient.container_id(self)
             if id:
                 self.container_id = id
                 self.save()
@@ -65,12 +74,8 @@ class Container(SerializeMixin, ContainerBase):
         if not self.networks.exists() and self.app.project.network:
             self.networks.add(self.app.project.network)
 
-    @property
-    def port(self):
-        return self.app.data.get('port', 8080)
-
     def delete(self, **kwargs):
-        dclient.remove(self)
+        self.dclient.remove(self)
         return super(Container, self).delete(**kwargs)
 
     def stop_all(self):
@@ -79,27 +84,27 @@ class Container(SerializeMixin, ContainerBase):
             instance.stop()
 
     def stop(self):
-        dclient._stop(self)
+        self.dclient._stop(self)
 
 
 # SIGNALS
 
 def connect_or_disconnect_container_to_network(sender, instance, action, model, pk_set, **kwargs):
     if action in ['post_add', 'post_remove']:
-        docker_container = dclient.get_container_by_name(instance.container_id)
+        docker_container = instance.dclient.get_container_by_name(instance.container_id)
         networks_id = [str(pk) for pk in pk_set]
         networks_instances = model.objects.filter(id__in=networks_id)
-        docker_networks = [dclient.get_network_by_id(net.network_id) for net in networks_instances]
+        docker_networks = [instance.dclient.get_network_by_id(net.network_id) for net in networks_instances]
         if action == 'post_add':
             for network in docker_networks:
                 print(f"Metiendo el contenedor {instance.name} en la red {network.name}")
-                dclient.connect_container_to_network(network, docker_container)
-                print(f"Contenedores presentes {dclient.get_containers_on_network(network)}")
+                instance.dclient.connect_container_to_network(network, docker_container)
+                print(f"Contenedores presentes {instance.dclient.get_containers_on_network(network)}")
         elif action == 'post_remove':
             for network in docker_networks:
                 print(f"Sacando el contenedor {instance.name} de la red {network.name}")
-                dclient.disconnect_container_to_network(network, docker_container)
-                print(f"Contenedores presentes {dclient.get_containers_on_network(network)}")
+                instance.dclient.disconnect_container_to_network(network, docker_container)
+                print(f"Contenedores presentes {instance.dclient.get_containers_on_network(network)}")
             
 
 m2m_changed.connect(connect_or_disconnect_container_to_network, sender=Container.networks.through)
