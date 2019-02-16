@@ -59,7 +59,7 @@ class Container(SerializeMixin, ContainerBase):
 
     @property
     def port(self):
-        return self.data.get('port', 8080)
+        return self.app.data.get('port', 8080)
 
     def start(self, instance_name=None):
         if not self.active:
