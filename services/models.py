@@ -44,7 +44,10 @@ class Service(SlugableBehaviour, SerializeMixin, LoadBalancerMixin, ContainerBas
             f = None
         finally:
             return f
-         
+
+    @property
+    def port(self):
+        return self.data.get('port', 8080)      
 
     @property
     def status(self):

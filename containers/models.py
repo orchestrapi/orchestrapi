@@ -30,10 +30,6 @@ class ContainerBase(TimestampableBehaviour, UUIDIndexBehaviour, models.Model):
         if self.status and self.status not in ['stopped', 'exited']:
             return self.inspect['NetworkSettings']['IPAddress']
 
-    @property
-    def port(self):
-        return self.data.get('port', 8080)
-
     def is_running(self):
         return self.status and self.status not in ['stopped', 'exited']
 
@@ -60,6 +56,10 @@ class Container(SerializeMixin, ContainerBase):
         if self.container_id and self.active:
             status = self.dclient.container_status(self.container_id)
             return status if status else 'stopped'
+
+    @property
+    def port(self):
+        return self.data.get('port', 8080)
 
     def start(self, instance_name=None):
         if not self.active:
