@@ -1,0 +1,2 @@
+class UnknownRepoTypeException(Exception):
+    pass

@@ -9,7 +9,7 @@ from core.behaviours import (SlugableBehaviour, TimestampableBehaviour,
 
 from projects.models import Project
 from core.mixins import SerializeMixin
-
+from .exceptions import UnknownRepoTypeException
 
 def default_data():
     return {
@@ -45,10 +45,13 @@ class App(SlugableBehaviour, TimestampableBehaviour, UUIDIndexBehaviour, Seriali
 
     @property
     def repository_type(self):
-        if '@bitbucket.org' in self.git.get('url'):
+        if '@bitbucket.org' in self.git.get('url', ''):
             return 'bitbucket'
-        elif 'https://github.com' in self.git.get('url'):
+        elif 'https://github.com' in self.git.get('url', ''):
             return 'github'
+        elif 'docker' in self.data.keys():
+            return 'docker'
+        raise UnknownRepoTypeException("Unknown repository type")
 
     @property
     def running_containers_ips(self):
