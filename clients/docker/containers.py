@@ -97,10 +97,10 @@ class DockerContainerMixin:
         try:
             image = self.client.images.get(image_model.image_id)
             image.remove()
-        except CalledProcessError:
+        except NotFound:
             print(f'Image {image_model.image_tag} does not exists.')
         except APIError:
-            print(f'Error removing container {container_model.name}.')
+            print(f'Error removing image {image_model.image_tag}.')
 
     def _run(self, container_model, instance_name=None):
         """Runs a container using 'run' command."""
@@ -111,7 +111,7 @@ class DockerContainerMixin:
                     for par_e, par_e_val in container_model.params['e'].items():
                         template.append(f'-{param}')
                         template.append(f'{par_e}={par_e_val}')
-                elif param == 'v' or param == 'p':
+                elif param in ('v', 'p'):
                     for volumen in container_model.params[param]:
                         template.append(f'-{param}')
                         template.append(clean_volume(volumen, container_model.app))
@@ -134,7 +134,7 @@ class DockerContainerMixin:
                     for par_e, par_e_val in service_instance.params['e'].items():
                         template.append(f'-{param}')
                         template.append(f'{par_e}={par_e_val}')
-                elif param == 'v' or param == 'p':
+                elif param in ('v', 'p'):
                     for volumen in service_instance.params[param]:
                         template.append(f'-{param}')
                         template.append(clean_volume(volumen, service_instance))

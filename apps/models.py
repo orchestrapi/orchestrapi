@@ -161,7 +161,6 @@ class App(SlugableBehaviour, TimestampableBehaviour, UUIDIndexBehaviour, Seriali
         )
 
     def start_instance(self, instance_number):
-        from images.models import Image
         if self.containers.filter(name=f"{self.slug}_{instance_number}", active=True).exists():
             container = self.containers.get(
                 name=f"{self.slug}_{instance_number}", active=True)
