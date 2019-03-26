@@ -178,10 +178,12 @@ ORCHESTRAPI_HTTP_SCHEMA = os.environ.get('ORCHESTRAPI_HTTP_SCHEMA', 'http')
 
 CORS_ORIGIN_WHITELIST = (
     'localhost:4200',
+    'localhost:8080',
 )
 
 CSRF_TRUSTED_ORIGINS = (
     'localhost:4200',
+    'localhost:8080',
 )
 
 # REST FRAMEWORK
