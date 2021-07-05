@@ -19,6 +19,7 @@ class NetworkBase(UUIDIndexBehaviour, SlugableBehaviour, TimestampableBehaviour,
     def get_docker_network(self):
         if self.network_id:
             return self.dclient.get_network_by_id(self.network_id)
+        return None
 
     def remove_docker_network(self):
         if self.network_id:

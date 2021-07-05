@@ -20,10 +20,18 @@ def manage_repository_webhook(request, repository, app_id):
     if not message:
         return JsonResponse({
             "status": "Invalid format", "message": "Invalid json format for webhook."}, status=400)
-    if repository == 'bitbucket':
-        process_webhook_task.delay('bitbucket', message, app_id)
-    elif repository == 'github':
-        process_webhook_task.delay('github', message, app_id)
+
+    if repository in ['bitbucket', 'github']:
+        process_webhook_task.delay(repository, message, app_id)
+    elif repository == 'gitlab':
+        process_webhook_task.delay(
+            repository, message, app_id,
+            headers={
+                'HTTP_X_GITLAB_EVENT': request.META.get('HTTP_X_GITLAB_EVENT', None)
+            }
+        )
+    elif repository == 'docker':
+        raise NotImplementedError("Docker repository not implemented yet!")
     else:
         return JsonResponse({"status": 'error', 'message': 'Unknown repository'}, status=400)
     return JsonResponse({}, status=200)

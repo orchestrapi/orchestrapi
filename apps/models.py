@@ -1,15 +1,17 @@
+"""App models module."""
+from django.conf import settings
 from django.contrib.postgres.fields import JSONField
 from django.db import models
 from django.template import loader
-from django.conf import settings
 
 from clients.tasks import send_slack_message
 from core.behaviours import (SlugableBehaviour, TimestampableBehaviour,
                              UUIDIndexBehaviour)
-
-from projects.models import Project
 from core.mixins import SerializeMixin
+from projects.models import Project
+
 from .exceptions import UnknownRepoTypeException
+
 
 def default_data():
     return {
@@ -30,9 +32,11 @@ class App(SlugableBehaviour, TimestampableBehaviour, UUIDIndexBehaviour, Seriali
     name = models.CharField(max_length=255, verbose_name="Name")
     data = JSONField(default=default_data, blank=True)
     params = JSONField(default=dict, blank=True)
-    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='apps', blank=True, null=True)
+    project = models.ForeignKey(
+        Project, on_delete=models.CASCADE, related_name='apps', blank=True, null=True)
 
-    load_balancer = models.ForeignKey('services.Service', on_delete=models.CASCADE, related_name="apps", null=True, blank=True)
+    load_balancer = models.ForeignKey(
+        'services.Service', on_delete=models.CASCADE, related_name="apps", null=True, blank=True)
 
     @property
     def ready_to_publish(self):
@@ -49,21 +53,37 @@ class App(SlugableBehaviour, TimestampableBehaviour, UUIDIndexBehaviour, Seriali
             return 'bitbucket'
         elif 'https://github.com' in self.git.get('url', ''):
             return 'github'
+        elif 'gitlab.' in self.git.get('url', ''):
+            return 'gitlab'
         elif 'docker' in self.data.keys():
             return 'docker'
         raise UnknownRepoTypeException("Unknown repository type")
 
     @property
     def running_containers_ips(self):
-        return [cont.ip for cont in self.containers.filter(active=True) if cont.status not in ['stopped', 'exited']]
+        return [
+            cont.ip for cont in self.containers.filter(active=True)
+            if cont.status not in ['stopped', 'exited']
+        ]
 
     @property
     def running_containers_ips_and_port(self):
-        return [f"{cont.ip}:{cont.port}" for cont in self.containers.filter(active=True) if cont.status not in ['stopped', 'exited']]
+        return [
+            f"{cont.ip}:{cont.port}" for cont in self.containers.filter(active=True)
+            if cont.status not in ['stopped', 'exited']
+        ]
 
     @property
     def webhook_url(self):
-        return f'{settings.ORCHESTRAPI_HTTP_SCHEMA}://{settings.ORCHESTRAPI_DOMAIN_AND_PORT}/webhooks/{self.repository_type}/{self.id}'
+        if not self.repository_type and not self.id:
+            return ''
+        return '{}://{}/webhooks/{}/{}'.format(
+            settings.ORCHESTRAPI_HTTP_SCHEMA,
+            settings.ORCHESTRAPI_DOMAIN_AND_PORT,
+            self.repository_type,
+            self.id
+        )
+
 
     @property
     def domain(self):
@@ -106,7 +126,8 @@ class App(SlugableBehaviour, TimestampableBehaviour, UUIDIndexBehaviour, Seriali
             else:
                 template = loader.get_template('apps/nginx/base.conf')
             if not self.load_balancer:
-                containers = [cont for cont in self.containers.filter(active=True) if cont.status not in ['stopped', 'exited']]
+                containers = [cont for cont in self.containers.filter(
+                    active=True) if cont.status not in ['stopped', 'exited']]
             else:
                 containers = [self.load_balancer]
             ctx = {
@@ -169,7 +190,8 @@ class App(SlugableBehaviour, TimestampableBehaviour, UUIDIndexBehaviour, Seriali
             })
             return container.start()
 
-        instance = self._create_instance(self.get_or_create_last_image().tag, instance_number)
+        instance = self._create_instance(
+            self.get_or_create_last_image().tag, instance_number)
 
         return instance.start()
 

@@ -1,12 +1,13 @@
 from rest_framework import viewsets
 
-from .models import Image
-from .serializers import ImageSerializer
+from .models import Server
+from .serializers import ServerSerializer
 
 
-class ImageViewSet(viewsets.ModelViewSet):
-    serializer_class = ImageSerializer
-    queryset = Image.objects.all()
+class ServerViewSet(viewsets.ModelViewSet):
+
+    queryset = Server.objects.all()
+    serializer_class = ServerSerializer
 
     def __init__(self, *args, **kwargs):
         self.http_method_names = [

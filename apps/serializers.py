@@ -11,4 +11,7 @@ class AppSerializer(serializers.ModelSerializer):
                   'repository_type', 'create_date', 'slug']
 
     def get_repository_type(self, obj):
-        return obj.repository_type
+        try:
+            return obj.repository_type
+        except Exception:
+            return ''

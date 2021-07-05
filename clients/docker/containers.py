@@ -1,7 +1,11 @@
+import logging
+
 from django.template.defaultfilters import filesizeformat
-from docker.errors import ImageNotFound, APIError, NotFound
+from docker.errors import APIError, ImageNotFound, NotFound
 
 from ..utils import clean_volume
+
+logger = logging.getLogger('clients.docker.containers')
 
 class DockerContainerMixin:
 
@@ -87,9 +91,10 @@ class DockerContainerMixin:
                 container_model.name)
             container.remove()
         except NotFound:
-            print(f'Container {container_model.name} does not exists.')
+            logger.error('Container %s does not exists.', container_model.name)
+
         except APIError:
-            print(f'Error removing container {container_model.name}.')
+            logger.error('Error removing container %s.', container_model.name)
 
     def remove_image(self, image_model):
         """Removes an image."""
@@ -98,9 +103,9 @@ class DockerContainerMixin:
             image = self.client.images.get(image_model.image_id)
             image.remove()
         except NotFound:
-            print(f'Image {image_model.image_tag} does not exists.')
+            logger.error('Image %s does not exists.', image_model.image_tag)
         except APIError:
-            print(f'Error removing image {image_model.image_tag}.')
+            logger.error('Error removing image %s.', image_model.image_tag)
 
     def _run(self, container_model, instance_name=None):
         """Runs a container using 'run' command."""
@@ -118,6 +123,8 @@ class DockerContainerMixin:
                 else:
                     template.append(f'-{param}')
                     template.append(container_model.params[param])
+        template.append('--restart')
+        template.append('always')
         template.append('--name')
         template.append(instance_name or container_model.name)
         template.append('-d')
@@ -157,6 +164,7 @@ class DockerContainerMixin:
         try:
             return self.client.containers.get(name)
         except NotFound:
+            logger.error("Container %s not found!", name)
             return None
         except APIError:
-            print("Error obteniendo contenedor")
+            logger.error("Error getting container %s", name)

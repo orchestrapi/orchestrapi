@@ -1,16 +1,18 @@
-from .tasks import restart_containers_task
+from .tasks import restart_containers_task, stop_containers_task, start_containers_task
 
 
 def start_containers(modeladmin, request, queryset):
-    for container in queryset:
-        if container.status in ['stopped', 'exited']:
-            container.start(container.name)
+    start_containers_task.delay(
+        [container.pk for container in queryset if container.status in [
+            'stopped', 'exited']]
+    )
 
 
 def stop_containers(modeladmin, request, queryset):
-    for container in queryset:
-        if container.status not in ['stopped', 'exited']:
-            container.stop()
+    stop_containers_task.delay(
+        [container.pk for container in queryset if container.status not in [
+            'stopped', 'exited']]
+    )
 
 
 def restart_containers(modeladmin, request, queryset):

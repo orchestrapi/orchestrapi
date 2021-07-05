@@ -1,12 +1,12 @@
 from rest_framework import viewsets
 
-from .models import Image
-from .serializers import ImageSerializer
+from .models import NetworkBridge
+from .serializers import NetworkBridgeSerializer
 
 
-class ImageViewSet(viewsets.ModelViewSet):
-    serializer_class = ImageSerializer
-    queryset = Image.objects.all()
+class NetworkBridgeViewSet(viewsets.ModelViewSet):
+    queryset = NetworkBridge.objects.all()
+    serializer_class = NetworkBridgeSerializer
 
     def __init__(self, *args, **kwargs):
         self.http_method_names = [

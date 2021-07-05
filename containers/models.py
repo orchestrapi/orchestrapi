@@ -1,3 +1,5 @@
+import logging
+
 from django.contrib.postgres.fields import JSONField
 from django.db import models
 from django.db.models.signals import m2m_changed
@@ -5,9 +7,11 @@ from django.db.models.signals import m2m_changed
 from apps.models import App
 from clients.docker import DockerClient
 from core.behaviours import TimestampableBehaviour, UUIDIndexBehaviour
+from core.mixins import SerializeMixin
 from images.models import Image
 from networks.models import NetworkBridge
-from core.mixins import SerializeMixin
+
+logger = logging.getLogger('containers.models')
 
 
 class ContainerBase(TimestampableBehaviour, UUIDIndexBehaviour, models.Model):
@@ -38,17 +42,11 @@ class ContainerBase(TimestampableBehaviour, UUIDIndexBehaviour, models.Model):
 
 
 class Container(SerializeMixin, ContainerBase):
+
     instance_number = models.SmallIntegerField()
-
-    app = models.ForeignKey(
-        App, blank=True, null=True,
-        related_name='containers', on_delete=models.CASCADE)
-
-    image = models.ForeignKey(
-        Image, blank=True, null=True,
-        related_name='containers', on_delete=models.CASCADE)
+    app = models.ForeignKey(App, blank=True, null=True, related_name='containers', on_delete=models.CASCADE)
+    image = models.ForeignKey(Image, blank=True, null=True, related_name='containers', on_delete=models.CASCADE)
     networks = models.ManyToManyField(NetworkBridge, related_name="containers", blank=True)
-
     active = models.BooleanField(default=True)
 
     @property
@@ -56,6 +54,7 @@ class Container(SerializeMixin, ContainerBase):
         if self.container_id and self.active:
             status = self.dclient.container_status(self.container_id)
             return status if status else 'stopped'
+        return None
 
     @property
     def port(self):
@@ -64,11 +63,11 @@ class Container(SerializeMixin, ContainerBase):
     def start(self, instance_name=None):
         if not self.active:
             return
-        result = self.dclient.docker_start(self, instance_name=instance_name)
+        self.dclient.docker_start(self, instance_name=instance_name)
         if not self.container_id:
-            id = self.dclient.container_id(self)
-            if id:
-                self.container_id = id
+            cont_id = self.dclient.container_id(self)
+            if cont_id:
+                self.container_id = cont_id
                 self.save()
 
         if not self.networks.exists() and self.app.project.network:
@@ -91,20 +90,23 @@ class Container(SerializeMixin, ContainerBase):
 
 def connect_or_disconnect_container_to_network(sender, instance, action, model, pk_set, **kwargs):
     if action in ['post_add', 'post_remove']:
-        docker_container = instance.dclient.get_container_by_name(instance.container_id)
+        docker_container = instance.dclient.get_container_by_name(
+            instance.container_id)
         networks_id = [str(pk) for pk in pk_set]
         networks_instances = model.objects.filter(id__in=networks_id)
-        docker_networks = [instance.dclient.get_network_by_id(net.network_id) for net in networks_instances]
+        docker_networks = [instance.dclient.get_network_by_id(
+            net.network_id) for net in networks_instances]
         if action == 'post_add':
             for network in docker_networks:
-                print(f"Metiendo el contenedor {instance.name} en la red {network.name}")
+                logger.debug("Metiendo el contenedor %s en la red %s", instance.name, network.name)
                 instance.dclient.connect_container_to_network(network, docker_container)
-                print(f"Contenedores presentes {instance.dclient.get_containers_on_network(network)}")
+                logger.debug("Contenedores presentes %s", instance.dclient.get_containers_on_network(network))
         elif action == 'post_remove':
             for network in docker_networks:
-                print(f"Sacando el contenedor {instance.name} de la red {network.name}")
+                logger.debug("Sacando el contenedor %s de la red %s", instance.name, network.name)
                 instance.dclient.disconnect_container_to_network(network, docker_container)
-                print(f"Contenedores presentes {instance.dclient.get_containers_on_network(network)}")
-            
+                logger.debug("Contenedores presentes %s", instance.dclient.get_containers_on_network(network))
 
-m2m_changed.connect(connect_or_disconnect_container_to_network, sender=Container.networks.through)
+
+m2m_changed.connect(connect_or_disconnect_container_to_network,
+                    sender=Container.networks.through)

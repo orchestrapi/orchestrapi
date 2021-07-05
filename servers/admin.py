@@ -1,9 +1,11 @@
 from django.contrib import admin
 from django.utils.safestring import mark_safe
+
 from .models import Server
 
+
 class ServerAdmin(admin.ModelAdmin):
-    
+
     list_display = ['name', '_daemon_url', 'hearthbeat']
 
     def _daemon_url(self, obj):
@@ -24,7 +26,6 @@ class ServerAdmin(admin.ModelAdmin):
                     }
                 });
         """ % (obj.get_daemon_url, obj.id)
-        print(script)
         return mark_safe(f'<p id="server{obj.id}">Heathbeat</p><script>{script}</script>')
 
 

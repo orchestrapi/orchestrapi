@@ -5,8 +5,7 @@ from django.db.models.signals import m2m_changed
 
 from containers.models import (ContainerBase,
                                connect_or_disconnect_container_to_network)
-from core.behaviours import (SlugableBehaviour, TimestampableBehaviour,
-                             UUIDIndexBehaviour)
+from core.behaviours import SlugableBehaviour
 from core.mixins import SerializeMixin
 from networks.models import NetworkBridge
 
@@ -20,7 +19,7 @@ def default_data():
             'name': '',
             'tag': ''
         }
-    }        
+    }
 
 
 class Service(SlugableBehaviour, SerializeMixin, LoadBalancerMixin, ContainerBase):
@@ -39,15 +38,14 @@ class Service(SlugableBehaviour, SerializeMixin, LoadBalancerMixin, ContainerBas
         if not slug:
             return None
         try:
-            f = self.config_files.get(slug=slug)
+            file_content = self.config_files.get(slug=slug)
         except ObjectDoesNotExist:
-            f = None
-        finally:
-            return f
+            file_content = None
+        return file_content
 
     @property
     def port(self):
-        return self.data.get('port', 8080)      
+        return self.data.get('port', 8080)
 
     @property
     def status(self):
@@ -63,9 +61,9 @@ class Service(SlugableBehaviour, SerializeMixin, LoadBalancerMixin, ContainerBas
     def run(self):
         self.dclient.docker_start(self)
         if not self.container_id:
-            id = self.dclient.container_id(self)
-            if id:
-                self.container_id = id
+            docker_container_id = self.dclient.container_id(self)
+            if docker_container_id:
+                self.container_id = docker_container_id
                 self.save()
 
     def stop(self):

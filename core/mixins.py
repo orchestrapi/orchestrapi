@@ -1,4 +1,3 @@
-import json
 from datetime import datetime
 from uuid import UUID
 
@@ -18,9 +17,9 @@ class SerializeMixin:
             return data
 
         for key, value in data.items():
-
             if isinstance(value, dict):
                 data[key] = SerializeMixin._serialize(value)
             if isinstance(value, (datetime, UUID)):
                 data[key] = value.__str__()
+
         return data

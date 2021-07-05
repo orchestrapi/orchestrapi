@@ -1,7 +1,7 @@
 from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
 from django.db import models
-from django.db.models.signals import pre_delete, post_save
+from django.db.models.signals import post_save, pre_delete
 
 from core.behaviours import (SlugableBehaviour, TimestampableBehaviour,
                              UUIDIndexBehaviour)
@@ -59,13 +59,15 @@ def remove_files_from_system(sender, instance, **kwargs):
     if instance.file:
         instance.file.delete(save=False)
 
+
 def restart_service_if_main_file_changes(sender, instance, **kwargs):
-    if not instance.service.data.get('main_config_file') == instance.slug:
+    if not instance.service or not instance.service.data.get('main_config_file') == instance.slug:
         return
     for app in instance.service.apps.all():
         instance.update_container_ips(app)
-        
+
     instance.service.dclient.get_container_by_name(instance.service.container_id).restart()
+
 
 pre_delete.connect(remove_files_from_system, sender=ConfigFile)
 post_save.connect(restart_service_if_main_file_changes, sender=ConfigFile)

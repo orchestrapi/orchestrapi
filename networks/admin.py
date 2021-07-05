@@ -9,4 +9,5 @@ class NetworkBridgeAdmin(admin.ModelAdmin):
     def _num_of_containers(self, obj):
         return len(obj.get_containers_list())
 
+
 admin.site.register(NetworkBridge, NetworkBridgeAdmin)

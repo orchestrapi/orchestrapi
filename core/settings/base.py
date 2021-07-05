@@ -26,8 +26,6 @@ INSTALLED_APPS = [
     'prettyjson',
     'rest_framework',
     'corsheaders',
-    'graphene_django',
-
     'clients',
 
     'apis.apps.ApisConfig',
@@ -41,8 +39,18 @@ INSTALLED_APPS = [
     'owners.apps.OwnersConfig',
     'files.apps.FilesConfig',
 
-    'webhooks.apps.WebhooksConfig'
+    'webhooks.apps.WebhooksConfig',
 
+    'django_nose',
+]
+
+TEST_RUNNER = 'django_nose.NoseTestSuiteRunner'
+
+NOSE_ARGS = [
+    '--with-coverage',
+    '--cover-html',
+    '--cover-html-dir=htmlcov',
+    '--cover-package=core,apis,apps,containers,files,images,networks,owners,projects,servers,services,webhooks',  # noqa
 ]
 
 MIDDLEWARE = [
@@ -52,7 +60,6 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'graphql_jwt.middleware.JSONWebTokenMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -85,24 +92,24 @@ WSGI_APPLICATION = 'core.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ.get('DB_NAME', 'database_name'),
-        'USER': os.environ.get('DB_USER', 'database_user'),
-        'PASSWORD': os.environ.get('DB_PASSWORD', 'database_password'),
+        'NAME': os.environ.get('DB_NAME', 'orchestrapi'),
+        'USER': os.environ.get('DB_USER', 'orchestrapi'),
+        'PASSWORD': os.environ.get('DB_PASSWORD', 'm4st3r0fth3pupp3ts'),
         'HOST': os.environ.get('DB_HOST', 'localhost'),
         'PORT': os.environ.get('DB_PORT', '5432'),
     }
 }
 
-if 'TRAVIS' in os.environ:
+if 'GITLAB' in os.environ:
     DATABASES = {
         'default': {
-            'ENGINE':   'django.db.backends.postgresql',
-            'NAME':     'travisci',
-            'USER':     'postgres',
-            'PASSWORD': '',
-            'HOST':     'localhost',
-            'PORT':     '',
-        }
+            'ENGINE': 'django.db.backends.postgresql_psycopg2',
+            'NAME': 'ci',
+            'USER': 'postgres',
+            'PASSWORD': 'postgres',
+            'HOST': 'postgres',
+            'PORT': '5432',
+        },
     }
 
 # Password validation
@@ -208,17 +215,3 @@ JWT_AUTH = {
     'JWT_EXPIRATION_DELTA': datetime.timedelta(hours=1),
     'JWT_ALLOW_REFRESH': True,
 }
-
-# GRAPHENE
-
-GRAPHENE = {
-    'SCHEMA': 'apis.schema.schema',
-    'MIDDLEWARE': [
-        'graphql_jwt.middleware.JSONWebTokenMiddleware'
-    ]
-}
-
-AUTHENTICATION_BACKENDS = [
-    'graphql_jwt.backends.JSONWebTokenBackend',
-    'django.contrib.auth.backends.ModelBackend',
-]

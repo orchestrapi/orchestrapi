@@ -8,8 +8,8 @@ from .models import Service
 
 
 class ServiceAdmin(admin.ModelAdmin):
-    list_display = ['name','service_with_tag', 'ip', '_networks', 'status']
-    actions = [start_service,stop_service]
+    list_display = ['name', 'service_with_tag', 'ip', '_networks', 'status']
+    actions = [start_service, stop_service]
 
     formfield_overrides = {
         JSONField: {'widget': PrettyJSONWidget}
@@ -17,5 +17,6 @@ class ServiceAdmin(admin.ModelAdmin):
 
     def _networks(self, obj):
         return ','.join([net.name for net in obj.networks.all()])
+
 
 admin.site.register(Service, ServiceAdmin)
