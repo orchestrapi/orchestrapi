@@ -1,6 +1,7 @@
 from django.contrib import admin
-from django.contrib.postgres.fields import JSONField
+from django.forms import JSONField
 from django.utils.safestring import mark_safe
+
 from prettyjson import PrettyJSONWidget
 
 from .actions import build_last_image, deploy, update_nginx_conf

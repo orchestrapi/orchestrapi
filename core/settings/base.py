@@ -25,6 +25,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'prettyjson',
     'rest_framework',
+    'rest_framework_simplejwt',
     'corsheaders',
     'clients',
 
@@ -41,17 +42,8 @@ INSTALLED_APPS = [
 
     'webhooks.apps.WebhooksConfig',
 
-    'django_nose',
 ]
 
-TEST_RUNNER = 'django_nose.NoseTestSuiteRunner'
-
-NOSE_ARGS = [
-    '--with-coverage',
-    '--cover-html',
-    '--cover-html-dir=htmlcov',
-    '--cover-package=core,apis,apps,containers,files,images,networks,owners,projects,servers,services,webhooks',  # noqa
-]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -184,13 +176,13 @@ ORCHESTRAPI_HTTP_SCHEMA = os.environ.get('ORCHESTRAPI_HTTP_SCHEMA', 'http')
 # CORS
 
 CORS_ORIGIN_WHITELIST = (
-    'localhost:4200',
-    'localhost:8080',
+    'http://localhost:4200',
+    'http://localhost:8080',
 )
 
 CSRF_TRUSTED_ORIGINS = (
-    'localhost:4200',
-    'localhost:8080',
+    'http://localhost:4200',
+    'http://localhost:8080',
 )
 
 # REST FRAMEWORK
@@ -200,8 +192,8 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticated',
     ),
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_jwt.authentication.JSONWebTokenAuthentication',
-        'rest_framework.authentication.SessionAuthentication',
+    'rest_framework_simplejwt.authentication.JWTAuthentication',
+    'rest_framework.authentication.SessionAuthentication',
         'rest_framework.authentication.BasicAuthentication',
     ),
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',

@@ -27,10 +27,12 @@ GIT_PROJECTS_ROUTE = os.environ.get('GIT_PROJECTS_ROUTE', '/path/to/git/apps')
 
 # CORS
 
+FRONTEND_DOMAIN = os.environ.get('FRONT_APP_DOMAIN', 'example.com')
+
 CORS_ORIGIN_WHITELIST = (
-    os.environ.get('FRONT_APP_DOMAIN', 'example.com')
+    FRONTEND_DOMAIN
 )
 
 CSRF_TRUSTED_ORIGINS = (
-    os.environ.get('FRONT_APP_DOMAIN', 'example.com')
+    FRONTEND_DOMAIN
 )
