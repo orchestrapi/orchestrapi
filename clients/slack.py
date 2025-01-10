@@ -2,8 +2,7 @@
 
 from django.conf import settings
 from django.template import loader
-from slackclient import SlackClient as SlackC
-
+from slack_sdk import WebClient as SlackC
 
 class SlackClient:
 
@@ -13,7 +12,7 @@ class SlackClient:
         """Init method."""
         self.key = settings.SLACKBOT_KEY
         self.secret = settings.SLACKBOT_SECRET
-        self.client = SlackC(self.key)
+        self.client = SlackC(token=self.key)
 
     def _render(self, template, context):
         """Render message from a html file."""
@@ -27,4 +26,4 @@ class SlackClient:
         if not context:
             context = dict()
         text = self._render(template, context)
-        self.client.api_call("chat.postMessage", channel="general", text=text)
+        self.client.chat_postMessage(channel="general", text=text)

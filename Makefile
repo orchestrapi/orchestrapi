@@ -2,13 +2,18 @@ PROJECT_NAME = orchestrapy
 VERSION := $(shell cat VERSION)
 
 run:
-	@echo "[*] Running $(PROJECT_NAME)..."
+	@echo "[*] Running $(PROJECT_NAME)...v$(VERSION)"
+	docker compose up -d
 	pipenv run python manage.py runserver
 
-lint:
-	@echo "[*] Linter $(PROJECT_NAME)..."
-	pipenv run pylint containers app apis clients core files images networks owners projects servers services webhooks
-
 test:
-	@echo "[*] Tests $(PROJECT_NAME)..."
+	@echo "[*] Tests on $(PROJECT_NAME)...v$(VERSION)"
 	pipenv run python manage.py test
+
+migrate:
+	@echo "[*] Migrating DB on $(PROJECT_NAME)..."
+	pipenv run python manage.py migrate
+
+makemigrations:
+	@echo "[*] Creating migrations on $(PROJECT_NAME)..."
+	pipenv run python manage.py makemigrations

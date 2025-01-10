@@ -1,6 +1,5 @@
 from django.contrib import admin
-from django.contrib.postgres.fields import JSONField
-from django.utils.safestring import mark_safe
+from django.forms import JSONField
 from prettyjson import PrettyJSONWidget
 from .actions import start_service, stop_service
 

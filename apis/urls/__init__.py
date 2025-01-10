@@ -1,14 +1,11 @@
-from django.conf import settings
 from django.urls import include, path
-from django.views.decorators.csrf import csrf_exempt
-from rest_framework_jwt.views import (obtain_jwt_token, refresh_jwt_token,
-                                      verify_jwt_token)
+
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView, TokenVerifyView
 
 urlpatterns = [
-    path('auth/token-auth/', obtain_jwt_token),
-    path('auth/token-refresh/', refresh_jwt_token),
-    path('auth/token-verify/', verify_jwt_token),
-    path('auth/basic-auth/', include('rest_framework.urls')),
-
-    path('v1/', include('apis.urls.v1')),
+    path("auth/token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
+    path("auth/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
+    path("auth/token/verify/", TokenVerifyView.as_view(), name="token_verify"),
+    path("auth/basic-auth/", include("rest_framework.urls")),
+    path("v1/", include("apis.urls.v1")),
 ]
